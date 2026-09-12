@@ -657,55 +657,6 @@ void DrawBoxes(Box boxes[], int lenBoxes) {
 	}
 }
 
-/*
-void UpdatePickup(Pickup *pickup, Camera listener) {
-	// Calculate angle
-	pickup->spin += pickup->spinSpeed;
-	if (pickup->spin > 360.0f) pickup->spin = 0.0f;
-
-	// Calculate bounce position
-	pickup->bounceTime += GetFrameTime();
-
-	float t = pickup->bounceTime / pickup->bounceDuration;
-
-	if (t >= 1.0f) t = 1.0f;	
-
-	// Ease in/out
-	float eased = (1.0f - cosf(t * PI)) * 0.5f;
-
-	float startY;
-	float endY;
-
-	if (pickup->bounceUp) {
-		startY = pickup->targetY - 0.1f;
-		endY = pickup->targetY + 0.1f;
-	}
-	else {
-		startY = pickup->targetY + 0.1f;
-		endY = pickup->targetY - 0.1f;
-	}
-
-	pickup->position.y = startY + (endY - startY) * eased;
-
-	if (pickup->bounceTime >= pickup->bounceDuration) {
-		pickup->bounceTime = 0.0f;
-		pickup->bounceUp = !pickup->bounceUp;
-	}
-
-	// Play idle sound
-	UpdatePositionalSound(pickup->idleSound, listener, pickup->position, 0.1f);
-
-	if (!IsSoundPlaying(pickup->idleSound)) {
-		PlaySound(pickup->idleSound);
-	}
-}
-
-void DrawPickup(Pickup pickup) {
-	DrawModelEx(pickup.model, pickup.position, (Vector3){ 0.0f, 1.0f, 0.0f }, pickup.spin, (Vector3){ 1.8f, 1.8f, 1.8f }, WHITE);
-	//DrawCubeWires(pickup.position, pickup.size.x, pickup.size.y, pickup.size.z, GREEN);
-}
-*/
-
 void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPickups, Camera listener) {
 	const float maxTriggeringDistance = 20.0f;
 
@@ -795,8 +746,6 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 
 void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool) {
 	for (int o = 0; o < lenPickups; o++){
-		//UpdatePickup(&pickups[o], listener);
-
 		// Calculate angle
 		pickups[o].spin += pickups[o].spinSpeed;
 		if (pickups[o].spin > 360.0f) pickups[o].spin = 0.0f;
@@ -935,14 +884,6 @@ int main(void) {
 	Sound fxUIClick = LoadSound("assets/audio/accept.ogg");
 
 	// Sound pools
-	/*
-	int lenPickupPulsePool = MAX_SOUND_POOL_SIZE;
-	Sound pickupPulsePool[lenPickupPulsePool];
-	for (int i = 0; i < lenPickupPulsePool; i++) {
-		pickupPulsePool[i] = LoadSound("assets/audio/low-synth-pulse.ogg");
-	}
-	*/
-
 	SoundPool pickupPulsePool = { .length = MAX_SOUND_POOL_SIZE };
 	for (int i = 0; i < pickupPulsePool.length; i++) {
 		pickupPulsePool.sounds[i] = LoadSound("assets/audio/low-synth-pulse.ogg");
@@ -1411,13 +1352,6 @@ int main(void) {
 	UnloadSound(fxLand);
 	UnloadSound(fxUIHover);
 	UnloadSound(fxUIClick);
-	//UnloadSound(fxPickupPulse);
-
-	/*
-	for (int i = 0; i < lenPickupPulsePool; i++) {
-		UnloadSound(pickupPulsePool[i]);
-	}
-	*/
 
 	for (int i = 0; i < pickupPulsePool.length; i++) {
 		UnloadSound(pickupPulsePool.sounds[i]);
