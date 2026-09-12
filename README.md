@@ -1,2 +1,3 @@
-# raylib-sandbox
-My personal stamping grounds for learning raylib and 3d game development.
+# Josh's Raylib Sandbox
+
+I'll update this README once I have more to say on the topic.
