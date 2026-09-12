@@ -28,6 +28,12 @@ There is also a makefile.
 
 typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
 
+typedef struct SoundPool {
+	Sound sounds[MAX_SOUND_POOL_SIZE];
+	int owner[MAX_SOUND_POOL_SIZE];
+	int length;
+} SoundPool;
+
 typedef struct MenuButton {
 	Vector2 position;
 	Vector2 size;
@@ -78,8 +84,6 @@ typedef struct Pickup {
 	bool bounceUp;
 	float bounceTime;
 	float bounceDuration;
-	Sound idleSoundPool[MAX_SOUND_POOL_SIZE];
-	int lenIdleSoundPool;
 } Pickup;
 
 // Save game to save file
@@ -702,7 +706,94 @@ void DrawPickup(Pickup pickup) {
 }
 */
 
-void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener) {
+void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPickups, Camera listener) {
+	const float maxTriggeringDistance = 20.0f;
+
+	// Release pool slots whose sounds have finished playing.
+	for (int i = 0; i < soundPool->length; i++) {
+
+		// Nothing is using this slot.
+		if (soundPool->owner[i] == -1) continue;
+
+		// The sound has finished, so the pool slot is available again.
+		if (!IsSoundPlaying(soundPool->sounds[i])) {
+			soundPool->owner[i] = -1;
+		}
+	}
+
+	// Update the position/volume/panning of sounds that are currently assigned to pickups.
+	for (int i = 0; i < soundPool->length; i++) {
+		int pickupIndex = soundPool->owner[i];
+
+		// This sound is currently unused.
+		if (pickupIndex == -1) continue;
+
+		UpdatePositionalSound(soundPool->sounds[i], listener, pickups[pickupIndex].position, 0.1f);
+	}
+
+	// Find the closest pickup that isn't currently represented by a sound in the pool.
+	while (true) {
+		int freeSoundIndex = -1;
+
+		// Find an unused sound in the pool.
+		for (int i = 0; i < soundPool->length; i++) {
+			if (soundPool->owner[i] == -1) {
+				freeSoundIndex = i;
+				break;
+			}
+		}
+
+		// There are no free sounds because every sound in the pool is currently being used.
+		if (freeSoundIndex == -1)
+			break;
+
+		// Find the closest pickup that isn't already represented in the pool.
+		int closestPickup = -1;
+		float closestDistance = maxTriggeringDistance;
+
+		for (int p = 0; p < lenPickups; p++) {
+			// Determine whether this pickup already owns a sound from this pool.
+			bool alreadyHasSound = false;
+			for (int s = 0; s < soundPool->length; s++) {
+				if (soundPool->owner[s] == p) {
+					alreadyHasSound = true;
+					break;
+				}
+			}
+
+			// Don't consider pickups that already have a sound.
+			if (alreadyHasSound) continue;
+
+			// Calculate distance from the listener. We only care about distance here because this is being used to decide which pickup gets a scarce sound-pool slot.
+			Vector3 direction = Vector3Subtract( pickups[p].position, listener.position);
+			float distance = Vector3Length(direction);
+
+			// Ignore pickups outside the sound's maximum range.
+			if (distance > maxTriggeringDistance) continue;
+
+
+			// Keep the closest eligible pickup.
+			if (closestPickup == -1 || distance < closestDistance) {
+				closestPickup = p;
+				closestDistance = distance;
+			}
+		}
+
+
+		// No pickup is close enough to use this sound.
+		if (closestPickup == -1) break;
+
+
+		// Assign the free sound to the closest eligible pickup.
+		soundPool->owner[freeSoundIndex] = closestPickup;
+
+		// Set its initial positional properties before playing.
+		UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, pickups[closestPickup].position, 0.1f);
+		PlaySound(soundPool->sounds[freeSoundIndex]);
+	}
+}
+
+void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool) {
 	for (int o = 0; o < lenPickups; o++){
 		//UpdatePickup(&pickups[o], listener);
 
@@ -738,15 +829,10 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener) {
 			pickups[o].bounceTime = 0.0f;
 			pickups[o].bounceUp = !pickups[o].bounceUp;
 		}
-	
-		// Play idle sound
-		// TODO: This bit need to change to account for sound pooling
-		UpdatePositionalSound(pickups[o].idleSoundPool[o], listener, pickups[o].position, 0.1f);
-	
-		if (!IsSoundPlaying(pickups[o].idleSoundPool[o])) {
-			PlaySound(pickups[o].idleSoundPool[o]);
-		}
 	}
+
+	// Play idle sounds
+	UpdatePickupIdleSounds(soundPool, pickups, lenPickups, listener);
 }
 
 void DrawPickups(Pickup pickups[], int lenPickups) {
@@ -847,12 +933,20 @@ int main(void) {
 	Sound fxLand = LoadSound("assets/audio/land.ogg");
 	Sound fxUIHover = LoadSound("assets/audio/tick.ogg");
 	Sound fxUIClick = LoadSound("assets/audio/accept.ogg");
-	//Sound fxPickupPulse = LoadSound("assets/audio/low-synth-pulse.ogg");
 
+	// Sound pools
+	/*
 	int lenPickupPulsePool = MAX_SOUND_POOL_SIZE;
 	Sound pickupPulsePool[lenPickupPulsePool];
 	for (int i = 0; i < lenPickupPulsePool; i++) {
 		pickupPulsePool[i] = LoadSound("assets/audio/low-synth-pulse.ogg");
+	}
+	*/
+
+	SoundPool pickupPulsePool = { .length = MAX_SOUND_POOL_SIZE };
+	for (int i = 0; i < pickupPulsePool.length; i++) {
+		pickupPulsePool.sounds[i] = LoadSound("assets/audio/low-synth-pulse.ogg");
+		pickupPulsePool.owner[i] = -1;
 	}
 
 	// Models
@@ -986,18 +1080,13 @@ int main(void) {
 
 	// Create pickups
 	Pickup donuts[MAX_DONUTS];
-	int lenDonuts = 4;
-	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f, .lenIdleSoundPool = lenPickupPulsePool };
-	memcpy(donuts[0].idleSoundPool, pickupPulsePool, sizeof(pickupPulsePool));
-
-	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f, .lenIdleSoundPool = lenPickupPulsePool };
-	memcpy(donuts[1].idleSoundPool, pickupPulsePool, sizeof(pickupPulsePool));
-
-	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f, .lenIdleSoundPool = lenPickupPulsePool };
-	memcpy(donuts[2].idleSoundPool, pickupPulsePool, sizeof(pickupPulsePool));
-
-	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f, .lenIdleSoundPool = lenPickupPulsePool };
-	memcpy(donuts[3].idleSoundPool, pickupPulsePool, sizeof(pickupPulsePool));
+	int lenDonuts = 6;
+	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[4] = (Pickup){ .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[5] = (Pickup){ .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
 
 	float gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
@@ -1172,7 +1261,7 @@ int main(void) {
 					}
 
 					// Update pickups
-					UpdatePickups(donuts, lenDonuts, playerCamera);
+					UpdatePickups(donuts, lenDonuts, playerCamera, &pickupPulsePool);
 				}
 
 				// Game Paused
@@ -1324,8 +1413,14 @@ int main(void) {
 	UnloadSound(fxUIClick);
 	//UnloadSound(fxPickupPulse);
 
+	/*
 	for (int i = 0; i < lenPickupPulsePool; i++) {
 		UnloadSound(pickupPulsePool[i]);
+	}
+	*/
+
+	for (int i = 0; i < pickupPulsePool.length; i++) {
+		UnloadSound(pickupPulsePool.sounds[i]);
 	}
 
 	CloseWindow();
