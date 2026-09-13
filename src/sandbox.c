@@ -973,6 +973,104 @@ int main(void) {
 	quitToMenuButton.shadow = true;
 	quitToMenuButton.hoverSoundFlag = false;
 
+	// Color picker
+	int colorsPerCol = 8;
+	int colorsPerRow = 8;
+	Color colors[8][8] =
+	{
+		{
+			(Color){ 250, 250, 250, 255 },
+			(Color){ 220, 220, 220, 255 },
+			(Color){ 190, 190, 190, 255 },
+			(Color){ 160, 160, 160, 255 },
+			(Color){ 125, 125, 125, 255 },
+			(Color){  90,  90,  90, 255 },
+			(Color){  55,  55,  55, 255 },
+			(Color){  25,  25,  25, 255 }
+		},
+	
+		{
+			(Color){ 245, 150, 150, 255 },
+			(Color){ 245, 190, 130, 255 },
+			(Color){ 245, 225, 130, 255 },
+			(Color){ 160, 220, 160, 255 },
+			(Color){ 130, 220, 220, 255 },
+			(Color){ 140, 175, 235, 255 },
+			(Color){ 185, 150, 225, 255 },
+			(Color){ 235, 150, 190, 255 }
+		},
+	
+		{
+			(Color){ 235, 110, 110, 255 },
+			(Color){ 240, 165,  85, 255 },
+			(Color){ 240, 210,  75, 255 },
+			(Color){ 120, 200, 120, 255 },
+			(Color){  75, 195, 195, 255 },
+			(Color){ 105, 150, 225, 255 },
+			(Color){ 160, 110, 210, 255 },
+			(Color){ 225, 105, 160, 255 }
+		},
+	
+		{
+			(Color){ 220,  75,  75, 255 },
+			(Color){ 230, 140,  50, 255 },
+			(Color){ 230, 195,  40, 255 },
+			(Color){  85, 180,  90, 255 },
+			(Color){  45, 175, 175, 255 },
+			(Color){  70, 125, 210, 255 },
+			(Color){ 135,  80, 190, 255 },
+			(Color){ 205,  70, 135, 255 }
+		},
+	
+		{
+			(Color){ 190,  50,  55, 255 },
+			(Color){ 200, 110,  35, 255 },
+			(Color){ 205, 165,  30, 255 },
+			(Color){  60, 145,  70, 255 },
+			(Color){  30, 145, 145, 255 },
+			(Color){  50, 100, 180, 255 },
+			(Color){ 110,  60, 165, 255 },
+			(Color){ 180,  50, 115, 255 }
+		},
+	
+		{
+			(Color){ 155,  40,  45, 255 },
+			(Color){ 165,  85,  30, 255 },
+			(Color){ 170, 135,  25, 255 },
+			(Color){  45, 115,  55, 255 },
+			(Color){  25, 115, 115, 255 },
+			(Color){  40,  80, 150, 255 },
+			(Color){  85,  45, 135, 255 },
+			(Color){ 145,  35,  90, 255 }
+		},
+	
+		{
+			(Color){ 115,  35,  40, 255 },
+			(Color){ 125,  65,  25, 255 },
+			(Color){ 130, 105,  20, 255 },
+			(Color){  35,  85,  45, 255 },
+			(Color){  20,  85,  85, 255 },
+			(Color){  30,  60, 115, 255 },
+			(Color){  65,  35, 100, 255 },
+			(Color){ 105,  25,  65, 255 }
+		},
+	
+		{
+			(Color){  75,  25,  30, 255 },
+			(Color){  85,  45,  20, 255 },
+			(Color){  90,  70,  15, 255 },
+			(Color){  25,  60,  30, 255 },
+			(Color){  15,  60,  60, 255 },
+			(Color){  20,  40,  80, 255 },
+			(Color){  45,  25,  70, 255 },
+			(Color){  70,  20,  45, 255 }
+		}
+	};
+	int selectedColorX = 3;
+	int selectedColorY = 3;
+	bool showColorPicker = false;
+	int colorPickerTimer = 0;
+
 	// Create generic camera
 	Camera3D genericCamera = { 0 };
 	genericCamera.position = (Vector3){ -5.0f, 5.0f, 5.0f };
@@ -1183,7 +1281,7 @@ int main(void) {
 								if (CanPlaceBox(boxes, lenBoxes, newBoxPosition, newBoxSize) && !CheckCollisionBoxes((BoundingBox){player.position, Vector3Add(player.position, player.size)}, (BoundingBox){ newBoxPosition, Vector3Add(newBoxPosition, newBoxSize) })) {
 									TraceLog(LOG_INFO, "Attempting to create boxes[%d]...", lenBoxes);
 
-									lenBoxes = AddBox(boxes, lenBoxes, newBoxPosition, GREEN, boxModel, 100.0f);
+									lenBoxes = AddBox(boxes, lenBoxes, newBoxPosition, colors[selectedColorX][selectedColorY], boxModel, 100.0f);
 									PlayPositionalSound(fxPlaceBox, playerCamera, newBoxPosition, 7.0f);
 
 									for (int i = 0; i < lenBoxes; i++) {
@@ -1199,6 +1297,48 @@ int main(void) {
 							}
 						}
 
+					}
+
+					// Color picker/selector
+					if (showColorPicker) {
+						colorPickerTimer++;
+					}
+
+					if (colorPickerTimer >= 180) {
+						showColorPicker = false;
+						colorPickerTimer = 0;
+					}
+
+					if (IsKeyPressed(KEY_DOWN)) {
+						showColorPicker = true;
+						colorPickerTimer = 0;
+						if (selectedColorY < colorsPerRow - 1) {
+							selectedColorY++;
+						}
+					}
+
+					if (IsKeyPressed(KEY_UP)) {
+						showColorPicker = true;
+						colorPickerTimer = 0;
+						if (selectedColorY > 0) {
+							selectedColorY--;
+						}
+					}
+
+					if (IsKeyPressed(KEY_LEFT)) {
+						showColorPicker = true;
+						colorPickerTimer = 0;
+						if (selectedColorX > 0) {
+							selectedColorX--;
+						}
+					}
+
+					if (IsKeyPressed(KEY_RIGHT)) {
+						showColorPicker = true;
+						colorPickerTimer = 0;
+						if (selectedColorX < colorsPerCol - 1) {
+							selectedColorX++;
+						}
 					}
 
 					// Update pickups
@@ -1314,6 +1454,26 @@ int main(void) {
 
 					// Draw fps
 					DrawFPS(GetScreenWidth() - 100, 10);
+
+					// Color picker
+					if (showColorPicker) {
+						int colorBoxSize = GetScreenWidth() / 50;
+						int colorBoxSpacing = GetScreenWidth() / 400;
+						int startingX = GetScreenWidth() - ((colorBoxSize + colorBoxSpacing)* colorsPerCol);
+						int startingY = GetScreenHeight() - ((colorBoxSize + colorBoxSpacing)* colorsPerRow);
+						int indicatorThickness = colorBoxSize / 10;
+						for (int i = 0; i < colorsPerCol; i++) {
+							for (int j = 0; j < colorsPerRow; j++) {
+								// Draw selected indicator
+								if (selectedColorX == i && selectedColorY == j) {
+									DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, startingY + (j * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, colorBoxSize + (indicatorThickness * 2), colorBoxSize + (indicatorThickness * 2), WHITE);
+								}
+
+								// Draw color box
+								DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)), startingY + (j * (colorBoxSize + colorBoxSpacing)), colorBoxSize, colorBoxSize, colors[i][j]);
+							}
+						}
+					}
 
 					// Game Paused
 					if (gamePaused) {
