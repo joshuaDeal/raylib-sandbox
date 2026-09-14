@@ -27,6 +27,8 @@ There is also a makefile.
 #define MAX_SOUND_POOL_SIZE 4
 
 typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
+typedef enum MenuScreen { MAIN_MENU, LOAD_GAME } MenuScreen;
+typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
 
 typedef struct SoundPool {
 	Sound sounds[MAX_SOUND_POOL_SIZE];
@@ -858,6 +860,57 @@ Vector3 GetBoxHitNormal(BoundingBox box, Vector3 hitPoint) {
 	return (Vector3){ 0.0f, 1.0f, 0.0f };
 }
 
+char *GetSaveDirectory(void) {
+	const char *workingDirectory = GetWorkingDirectory();
+	const char *suffix = "/save-data";
+
+	size_t length = strlen(workingDirectory) + strlen(suffix) + 1;
+	char *saveDirectory = malloc(length);
+
+	if (saveDirectory == NULL) {
+		return NULL;
+	}
+
+	snprintf(saveDirectory, length, "%s%s", workingDirectory, suffix);
+
+	return saveDirectory;
+}
+
+char *GetFileNameFromPath(const char *path) {
+	const char *filename;
+	const char *end;
+	size_t length;
+	char *result;
+
+	if (path == NULL) {
+		return NULL;
+	}
+
+	// Ignore trailing slashes, so "/path/to/file.txt/" gives "file.txt".
+	end = path + strlen(path);
+	while (end > path && end[-1] == '/') {
+		--end;
+	}
+
+	// Find the character after the final slash.
+	filename = end;
+	while (filename > path && filename[-1] != '/') {
+		--filename;
+	}
+
+	length = (size_t)(end - filename);
+
+	result = malloc(length + 1);
+	if (result == NULL) {
+		return NULL;
+	}
+
+	memcpy(result, filename, length);
+	result[length] = '\0';
+
+	return result;
+}
+
 int main(void) {
 	// Initialization
 	const int screenWidth = 800;
@@ -871,6 +924,35 @@ int main(void) {
 
 	// Disable default raylib escape key functionality 
 	SetExitKey(KEY_NULL);
+
+	// Save files
+	char *saveDirectory = GetSaveDirectory();
+	TraceLog(LOG_INFO, "Save directory: %s", saveDirectory);
+	FilePathList saveFiles = LoadDirectoryFilesEx(saveDirectory, ".json", false);
+	free(saveDirectory);
+
+	// Create save file buttons
+	MenuButton fileButtons[(int)saveFiles.count];
+	int yOffset = 0;
+	for (int i = 0; i < (int)saveFiles.count; i++) {
+		char *fileName = GetFileNameFromPath(saveFiles.paths[i]);
+
+		if (fileName != NULL) {
+			fileButtons[i].size = (Vector2){ 150, 38 };
+			fileButtons[i].buttonText = fileName;
+			fileButtons[i].fontSize = 15;
+			fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), 125 + yOffset };
+			fileButtons[i].buttonColor = RAYWHITE;
+			fileButtons[i].borderColor = GRAY;
+			fileButtons[i].textColor = BLACK;
+			fileButtons[i].boarderOffset = 5;
+			fileButtons[i].shadow = true;
+			fileButtons[i].hoverSoundFlag = false;
+			fileButtons[i].clicked = false;
+
+			yOffset += 40;
+		}
+	}
 
 	// Sounds
 	InitAudioDevice();
@@ -895,6 +977,8 @@ int main(void) {
 	donutModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
 
 	GameScreen screen = MENU;
+	MenuScreen menuScreen = MAIN_MENU;
+	PauseScreen pauseScreen = MAIN_PAUSE_MENU;
 
 	bool gamePaused = false;
 	bool exitWindow = false;
@@ -935,6 +1019,19 @@ int main(void) {
 	quitGameButton.boarderOffset = 5;
 	quitGameButton.shadow = true;
 	quitGameButton.hoverSoundFlag = false;
+
+	// Load Game buttons
+	MenuButton returnToMainButton = { 0 };
+	returnToMainButton.size = (Vector2){ 200, 50 };
+	returnToMainButton.buttonText = "<-";
+	returnToMainButton.fontSize = 20;
+	returnToMainButton.position = (Vector2){ (GetScreenWidth() / 100), (GetScreenHeight() / 100) };
+	returnToMainButton.buttonColor = RAYWHITE;
+	returnToMainButton.borderColor = GRAY;
+	returnToMainButton.textColor = BLACK;
+	returnToMainButton.boarderOffset = 5;
+	returnToMainButton.shadow = true;
+	returnToMainButton.hoverSoundFlag = false;
 
 	// Pause Menu buttons
 	MenuButton resumeButton = { 0 };
@@ -1141,31 +1238,63 @@ int main(void) {
 		// ------------------------------------------
 		switch (screen) {
 			case MENU: {
-				// Menu buttons
-				newGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (newGameButton.size.x / 2), (GetScreenHeight() / 2) - (newGameButton.size.y / 2) - 25 };
-				UpdateMenuButton(&newGameButton, fxUIHover, fxUIClick);
-				if (newGameButton.clicked) {
-					DisableCursor();
-					screen = GAMEPLAY;
-					newGameButton.clicked = false;
-				}
+				switch (menuScreen) {
+					case MAIN_MENU: {
+						// Menu buttons
+						newGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (newGameButton.size.x / 2), (GetScreenHeight() / 2) - (newGameButton.size.y / 2) - 25 };
+						UpdateMenuButton(&newGameButton, fxUIHover, fxUIClick);
+						if (newGameButton.clicked) {
+							DisableCursor();
+							screen = GAMEPLAY;
+							newGameButton.clicked = false;
+						}
 
-				loadGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (loadGameButton.size.x / 2), (GetScreenHeight() / 2) - (loadGameButton.size.y / 2) + 50 };
-				UpdateMenuButton(&loadGameButton, fxUIHover, fxUIClick);
-				if (loadGameButton.clicked) {
-					if (LoadGameData("save-data/save001.json", &player, boxes, &lenBoxes, boxModel)) {
-						TraceLog(LOG_INFO, "Save file loaded.");
-					} else {
-						TraceLog(LOG_ERROR, "Failed to load save file.");
-					}
-					loadGameButton.clicked = false;
-				}
+						loadGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (loadGameButton.size.x / 2), (GetScreenHeight() / 2) - (loadGameButton.size.y / 2) + 50 };
+						UpdateMenuButton(&loadGameButton, fxUIHover, fxUIClick);
+						if (loadGameButton.clicked) {
+							menuScreen = LOAD_GAME;
+							loadGameButton.clicked = false;
+						}
 
-				quitGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitGameButton.size.x / 2), (GetScreenHeight() / 2) - (quitGameButton.size.y / 2) + 125 };
-				UpdateMenuButton(&quitGameButton, fxUIHover, fxUIClick);
-				if (quitGameButton.clicked) {
-					exitWindow = true;
-					quitGameButton.clicked = false;
+						quitGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitGameButton.size.x / 2), (GetScreenHeight() / 2) - (quitGameButton.size.y / 2) + 125 };
+						UpdateMenuButton(&quitGameButton, fxUIHover, fxUIClick);
+						if (quitGameButton.clicked) {
+							exitWindow = true;
+							quitGameButton.clicked = false;
+						}
+					} break;
+
+					case LOAD_GAME: {
+						// Buttons
+						returnToMainButton.position = (Vector2){ 10, GetScreenHeight() - (returnToMainButton.size.y + 10) };
+						UpdateMenuButton(&returnToMainButton, fxUIHover, fxUIClick);
+						if (returnToMainButton.clicked) {
+							menuScreen = MAIN_MENU;
+							returnToMainButton.clicked = false;
+						}
+
+						// File buttons
+						for (int i = 0; i < (int)saveFiles.count; i++) {
+							UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
+							if (fileButtons[i].clicked) {
+								if (LoadGameData(saveFiles.paths[i], &player, boxes, &lenBoxes, boxModel)) {
+									menuScreen = MAIN_MENU;
+									screen = GAMEPLAY;
+									DisableCursor();
+									TraceLog(LOG_INFO, "Save file %s loaded.", saveFiles.paths[i]);
+									fileButtons[i].clicked = false;
+									break;
+								} else {
+									TraceLog(LOG_ERROR, "Failed to load save file: %s.", saveFiles.paths[i]);
+								}
+								
+								fileButtons[i].clicked = false;
+							}
+						}
+
+					} break;
+
+					default: break;
 				}
 			} break;
 
@@ -1351,35 +1480,50 @@ int main(void) {
 					if (IsKeyPressed(KEY_ESCAPE)) {
 						DisableCursor();
 						gamePaused = false;
+						pauseScreen = MAIN_PAUSE_MENU;
 					}
 
-					// Buttons
-					resumeButton.position = (Vector2){ (GetScreenWidth() / 2) - (resumeButton.size.x / 2), (GetScreenHeight() / 2) - (resumeButton.size.y / 2) - 25 };
-					UpdateMenuButton(&resumeButton, fxUIHover, fxUIClick);
-					if (resumeButton.clicked) {
-						DisableCursor();
-						gamePaused = false;
-						resumeButton.clicked = false;
-					}
+					switch (pauseScreen) {
+						case MAIN_PAUSE_MENU: {
 
-					saveGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (saveGameButton.size.x / 2), (GetScreenHeight() / 2) - (saveGameButton.size.y / 2) + 50 };
-					UpdateMenuButton(&saveGameButton, fxUIHover, fxUIClick);
-					if (saveGameButton.clicked) {
-						if (SaveGameData("save-data/save001.json", &player, boxes, lenBoxes)) {
-							TraceLog(LOG_INFO, "Game saved.");
-						} else {
-							TraceLog(LOG_ERROR, "Game save failed.");
-						}
-						saveGameButton.clicked = false;
-					}
+							// Buttons
+							resumeButton.position = (Vector2){ (GetScreenWidth() / 2) - (resumeButton.size.x / 2), (GetScreenHeight() / 2) - (resumeButton.size.y / 2) - 25 };
+							UpdateMenuButton(&resumeButton, fxUIHover, fxUIClick);
+							if (resumeButton.clicked) {
+								DisableCursor();
+								gamePaused = false;
+								resumeButton.clicked = false;
+							}
 
-					quitToMenuButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitToMenuButton.size.x / 2), (GetScreenHeight() / 2) - (quitToMenuButton.size.y / 2) + 125 };
-					UpdateMenuButton(&quitToMenuButton, fxUIHover, fxUIClick);
-					if (quitToMenuButton.clicked) {
-						EnableCursor();
-						screen = MENU;
-						gamePaused = false;
-						quitToMenuButton.clicked = false;
+							saveGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (saveGameButton.size.x / 2), (GetScreenHeight() / 2) - (saveGameButton.size.y / 2) + 50 };
+							UpdateMenuButton(&saveGameButton, fxUIHover, fxUIClick);
+							if (saveGameButton.clicked) {
+								pauseScreen = SAVE_GAME;
+								/*
+								if (SaveGameData("save-data/save001.json", &player, boxes, lenBoxes)) {
+									TraceLog(LOG_INFO, "Game saved.");
+								} else {
+									TraceLog(LOG_ERROR, "Game save failed.");
+								}
+								*/
+								saveGameButton.clicked = false;
+							}
+
+							quitToMenuButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitToMenuButton.size.x / 2), (GetScreenHeight() / 2) - (quitToMenuButton.size.y / 2) + 125 };
+							UpdateMenuButton(&quitToMenuButton, fxUIHover, fxUIClick);
+							if (quitToMenuButton.clicked) {
+								EnableCursor();
+								screen = MENU;
+								gamePaused = false;
+								quitToMenuButton.clicked = false;
+							}
+						} break;
+
+						case SAVE_GAME: {
+							TraceLog(LOG_INFO, "Main Pause Menu -> Save Game");
+						} break;
+
+						default: break;
 					}
 				}
 			} break;
@@ -1392,17 +1536,39 @@ int main(void) {
 		// ------------------------------------------
 		switch (screen) {
 			case MENU: {
-				BeginDrawing();
-					ClearBackground(BLACK);
+				switch (menuScreen) {
+					case MAIN_MENU: {
+						BeginDrawing();
+							ClearBackground(BLACK);
 
-					// Draw title
-					DrawText("Josh's Raylib Sandbox", GetScreenWidth()/2 - MeasureText("Josh's Raylib Sandbox", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+							// Draw title
+							DrawText("Josh's Raylib Sandbox", GetScreenWidth()/2 - MeasureText("Josh's Raylib Sandbox", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
 
-					// Draw menu buttons
-					DrawMenuButton(newGameButton);
-					DrawMenuButton(loadGameButton);
-					DrawMenuButton(quitGameButton);
-				EndDrawing();
+							// Draw menu buttons
+							DrawMenuButton(newGameButton);
+							DrawMenuButton(loadGameButton);
+							DrawMenuButton(quitGameButton);
+						EndDrawing();
+					} break;
+
+					case LOAD_GAME: {
+						BeginDrawing();
+							ClearBackground(BLACK);
+
+							// Draw page title
+							DrawText("Load Game", GetScreenWidth()/2 - MeasureText("Load Game", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+
+							// Draw files list buttons
+							for (int i = 0; i < (int)saveFiles.count; i++) {
+								DrawMenuButton(fileButtons[i]);
+							}
+
+							DrawMenuButton(returnToMainButton);
+						EndDrawing();
+					} break;
+
+					default: break;
+				}
 			} break;
 
 			case GAMEPLAY: {
@@ -1480,12 +1646,22 @@ int main(void) {
 						// Draw pause backdrop
 						DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5f));
 
-						DrawText("Paused", GetScreenWidth()/2 - MeasureText("Paused", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+						switch (pauseScreen) {
+							case MAIN_PAUSE_MENU: {
+								DrawText("Paused", GetScreenWidth()/2 - MeasureText("Paused", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
 
-						// Draw buttons
-						DrawMenuButton(resumeButton);
-						DrawMenuButton(saveGameButton);
-						DrawMenuButton(quitToMenuButton);
+								// Draw buttons
+								DrawMenuButton(resumeButton);
+								DrawMenuButton(saveGameButton);
+								DrawMenuButton(quitToMenuButton);
+							} break;
+
+							case SAVE_GAME: {
+								DrawText("Save Game", GetScreenWidth()/2 - MeasureText("Save Game", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+							} break;
+
+							default: break;
+						}
 					}
 				EndDrawing();
 			} break;
@@ -1516,6 +1692,12 @@ int main(void) {
 	for (int i = 0; i < pickupPulsePool.length; i++) {
 		UnloadSound(pickupPulsePool.sounds[i]);
 	}
+
+	for (int i = 0; i < (int)saveFiles.count; i++) {
+		free(fileButtons[i].buttonText);
+	}
+
+	UnloadDirectoryFiles(saveFiles);
 
 	CloseWindow();
 
