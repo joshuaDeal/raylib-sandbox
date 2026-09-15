@@ -1096,7 +1096,7 @@ int main(void) {
 	// Sounds
 	InitAudioDevice();
 	Sound fxPlaceBox = LoadSound("assets/audio/snap.ogg");
-	Sound fxBreakBox = LoadSound("assets/audio/click.ogg");
+	Sound fxBreakBox = LoadSound("assets/audio/break.ogg");
 	Sound fxHitBox = LoadSound("assets/audio/crack.ogg");
 	Sound fxStep = LoadSound("assets/audio/step.ogg");
 	Sound fxJump = LoadSound("assets/audio/whoosh.ogg");
