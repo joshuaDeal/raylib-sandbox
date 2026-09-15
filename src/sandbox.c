@@ -917,7 +917,7 @@ char *GetNewSaveFileName(const FilePathList *fileList)
 	const char *directory = NULL;
 	size_t lenDirectory = 0;
 
-	if (fileList == NULL || fileList->paths == NULL) {
+	if (fileList == NULL) {
 		return NULL;
 	}
 
@@ -982,23 +982,51 @@ char *GetNewSaveFileName(const FilePathList *fileList)
 	}
 
 	// If all numbers from 001 through 999 are already used.
-	if (nextNumber == 0 || directory == NULL) {
+	if (nextNumber == 0) {
 		return NULL;
+	}
+
+	// If no valid save files were found, use the default save directory.
+	char *allocatedDirectory = NULL;
+	bool addSlash = false;
+
+	if (directory == NULL) {
+		allocatedDirectory = GetSaveDirectory();
+
+		if (allocatedDirectory == NULL) {
+			return NULL;
+		}
+
+		directory = allocatedDirectory;
+		lenDirectory = strlen(directory);
+
+		addSlash = lenDirectory > 0 && directory[lenDirectory - 1] != '/';
 	}
 
 	// Allocate space for "directory + "save###.json" + terminating '\0'"
 	const char *filenameFormat = "save%03d.json";
 	int lenFilename = snprintf(NULL, 0, filenameFormat, nextNumber);
 
-	char *result = malloc(lenDirectory + (size_t)lenFilename + 1);
+	//char *result = malloc(lenDirectory + (size_t)lenFilename + 1);
+	char *result = malloc(lenDirectory + (addSlash ? 1 : 0) + (size_t)lenFilename + 1);
 
 	if (result == NULL) {
+		free(allocatedDirectory);
 		return NULL;
 	}
 
 	memcpy(result, directory, lenDirectory);
 
-	snprintf(result + lenDirectory, (size_t)lenFilename + 1, filenameFormat, nextNumber);
+	size_t offset = lenDirectory;
+
+	if (addSlash) {
+		result[offset++] = '/';
+	}
+
+	//snprintf(result + lenDirectory, (size_t)lenFilename + 1, filenameFormat, nextNumber);
+	snprintf(result + offset, (size_t)lenFilename + 1, filenameFormat, nextNumber);
+
+	free(allocatedDirectory);
 
 	return result;
 }
