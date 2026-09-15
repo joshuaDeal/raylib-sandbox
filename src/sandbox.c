@@ -1274,7 +1274,9 @@ int main(void) {
 						}
 
 						// File buttons
+						int yOffset = 0;
 						for (int i = 0; i < (int)saveFiles.count; i++) {
+							fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
 							UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 							if (fileButtons[i].clicked) {
 								if (LoadGameData(saveFiles.paths[i], &player, boxes, &lenBoxes, boxModel)) {
@@ -1290,6 +1292,8 @@ int main(void) {
 								
 								fileButtons[i].clicked = false;
 							}
+
+							yOffset += 40;
 						}
 
 					} break;
