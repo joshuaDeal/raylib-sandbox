@@ -911,6 +911,106 @@ char *GetFileNameFromPath(const char *path) {
 	return result;
 }
 
+char *GetNewSaveFileName(const FilePathList *fileList)
+{
+	bool used[1000] = { false };
+	const char *directory = NULL;
+	size_t lenDirectory = 0;
+
+	if (fileList == NULL || fileList->paths == NULL) {
+		return NULL;
+	}
+
+	for (unsigned int i = 0; i < fileList->count; ++i) {
+		const char *path = fileList->paths[i];
+
+		if (path == NULL) {
+			continue;
+		}
+
+		// Find the final path component.
+		const char *filename = strrchr(path, '/');
+		filename = filename ? filename + 1 : path;
+
+		int saveNumber;
+
+		// The %n conversion stores how many characters were consumed. This lets us verify that the filename contains exactly "save + three digits + .json"
+		int consumed = 0;
+
+		if (sscanf(filename, "save%d.json%n", &saveNumber, &consumed) != 1) {
+			continue;
+		}
+
+		if (filename[consumed] != '\0' || saveNumber < 1 || saveNumber > 999) {
+			continue;
+		}
+
+		// Verify that the number had exactly three digits. For example, reject save1.json and save0001.json.
+		const char *dot = strstr(filename, ".json");
+		size_t lenNumber = (size_t)(dot - (filename + 4));
+
+		if (lenNumber != 3) {
+			continue;
+		}
+
+		// Record the save number as used.
+		used[saveNumber] = true;
+
+		// Save the directory prefix from the first valid path.
+		if (directory == NULL) {
+			const char *lastSlash = strrchr(path, '/');
+
+			if (lastSlash != NULL) {
+				directory = path;
+				lenDirectory = (size_t)(lastSlash - path) + 1;
+			}
+			else {
+				directory = "";
+				lenDirectory = 0;
+			}
+		}
+	}
+
+	// Find the smallest unused number from 001 through 999.
+	int nextNumber = 0;
+
+	for (int i = 1; i <= 999; ++i) {
+		if (!used[i]) {
+			nextNumber = i;
+			break;
+		}
+	}
+
+	// If all numbers from 001 through 999 are already used.
+	if (nextNumber == 0 || directory == NULL) {
+		return NULL;
+	}
+
+	// Allocate space for "directory + "save###.json" + terminating '\0'"
+	const char *filenameFormat = "save%03d.json";
+	int lenFilename = snprintf(NULL, 0, filenameFormat, nextNumber);
+
+	char *result = malloc(lenDirectory + (size_t)lenFilename + 1);
+
+	if (result == NULL) {
+		return NULL;
+	}
+
+	memcpy(result, directory, lenDirectory);
+
+	snprintf(result + lenDirectory, (size_t)lenFilename + 1, filenameFormat, nextNumber);
+
+	return result;
+}
+
+FilePathList LoadSaveFiles(void) {
+	char *saveDirectory = GetSaveDirectory();
+	TraceLog(LOG_INFO, "Save directory: %s", saveDirectory);
+	FilePathList saveFiles = LoadDirectoryFilesEx(saveDirectory, ".json", false);
+	free(saveDirectory);
+	return saveFiles;
+}
+
 int main(void) {
 	// Initialization
 	const int screenWidth = 800;
@@ -926,10 +1026,7 @@ int main(void) {
 	SetExitKey(KEY_NULL);
 
 	// Save files
-	char *saveDirectory = GetSaveDirectory();
-	TraceLog(LOG_INFO, "Save directory: %s", saveDirectory);
-	FilePathList saveFiles = LoadDirectoryFilesEx(saveDirectory, ".json", false);
-	free(saveDirectory);
+	FilePathList saveFiles = LoadSaveFiles();
 
 	// Create save file buttons
 	MenuButton fileButtons[(int)saveFiles.count];
@@ -953,6 +1050,20 @@ int main(void) {
 			yOffset += 40;
 		}
 	}
+
+	// New save file button
+	MenuButton newSaveButton = { 0 };
+	newSaveButton.size = (Vector2){ 150, 38 };
+	newSaveButton.buttonText = "New Save";
+	newSaveButton.fontSize = 15;
+	newSaveButton.position = (Vector2){ (GetScreenWidth() / 2) - (newSaveButton.size.x / 2), 125 + yOffset };
+	newSaveButton.buttonColor = RAYWHITE;
+	newSaveButton.borderColor = GRAY;
+	newSaveButton.textColor = BLACK;
+	newSaveButton.boarderOffset = 5;
+	newSaveButton.shadow = true;
+	newSaveButton.hoverSoundFlag = false;
+	newSaveButton.clicked = false;
 
 	// Sounds
 	InitAudioDevice();
@@ -1503,13 +1614,6 @@ int main(void) {
 							UpdateMenuButton(&saveGameButton, fxUIHover, fxUIClick);
 							if (saveGameButton.clicked) {
 								pauseScreen = SAVE_GAME;
-								/*
-								if (SaveGameData("save-data/save001.json", &player, boxes, lenBoxes)) {
-									TraceLog(LOG_INFO, "Game saved.");
-								} else {
-									TraceLog(LOG_ERROR, "Game save failed.");
-								}
-								*/
 								saveGameButton.clicked = false;
 							}
 
@@ -1524,7 +1628,59 @@ int main(void) {
 						} break;
 
 						case SAVE_GAME: {
-							TraceLog(LOG_INFO, "Main Pause Menu -> Save Game");
+							// Buttons
+							returnToMainButton.position = (Vector2){ 10, GetScreenHeight() - (returnToMainButton.size.y + 10) };
+							UpdateMenuButton(&returnToMainButton, fxUIHover, fxUIClick);
+							if (returnToMainButton.clicked) {
+								pauseScreen = MAIN_PAUSE_MENU;
+								returnToMainButton.clicked = false;
+							}
+
+							// New save button
+							int yOffset = 0;
+							newSaveButton.position = (Vector2){ (GetScreenWidth() / 2) - (newSaveButton.size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
+							UpdateMenuButton(&newSaveButton, fxUIHover, fxUIClick);
+							if (newSaveButton.clicked) {
+								char *newSaveName = GetNewSaveFileName(&saveFiles);
+
+								if (newSaveName != NULL) {
+									if (SaveGameData(newSaveName, &player, boxes, lenBoxes)) {
+										TraceLog(LOG_INFO, "Game saved to %s.", newSaveName);
+										// TODO: We'll need to be able to update saveFiles and all the things dependant on it after creating a new save.
+									}
+									else {
+										TraceLog(LOG_ERROR, "Failed to save game to %s", newSaveName);
+									}
+
+									free(newSaveName);
+								}
+								else {
+									TraceLog(LOG_ERROR, "Game save failed: GetNewSaveFileName() returned NULL");
+								}
+
+
+								newSaveButton.clicked = false;
+							}
+
+							yOffset += 40;
+							// File buttons
+							for (int i = 0; i < (int)saveFiles.count; i++) {
+								fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
+								UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
+								if (fileButtons[i].clicked) {
+									if (SaveGameData(saveFiles.paths[i], &player, boxes, lenBoxes)) {
+										TraceLog(LOG_INFO, "Game saved to %s.", saveFiles.paths[i]);
+										fileButtons[i].clicked = false;
+										break;
+									} else {
+										TraceLog(LOG_ERROR, "Game save failed.");
+									}
+									
+									fileButtons[i].clicked = false;
+								}
+	
+								yOffset += 40;
+							}
 						} break;
 
 						default: break;
@@ -1662,6 +1818,16 @@ int main(void) {
 
 							case SAVE_GAME: {
 								DrawText("Save Game", GetScreenWidth()/2 - MeasureText("Save Game", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+
+								// Draw new save button
+								DrawMenuButton(newSaveButton);
+
+								// Draw files list buttons
+								for (int i = 0; i < (int)saveFiles.count; i++) {
+									DrawMenuButton(fileButtons[i]);
+								}
+
+								DrawMenuButton(returnToMainButton);
 							} break;
 
 							default: break;
