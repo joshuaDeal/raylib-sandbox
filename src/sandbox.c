@@ -1103,6 +1103,7 @@ int main(void) {
 	Sound fxLand = LoadSound("assets/audio/land.ogg");
 	Sound fxUIHover = LoadSound("assets/audio/tick.ogg");
 	Sound fxUIClick = LoadSound("assets/audio/accept.ogg");
+	Sound fxChangeColor = LoadSound("assets/audio/switch.ogg");
 
 	// Sound pools
 	SoundPool pickupPulsePool = { .length = MAX_SOUND_POOL_SIZE };
@@ -1586,6 +1587,7 @@ int main(void) {
 						colorPickerTimer = 0;
 						if (selectedColorY < colorsPerRow - 1) {
 							selectedColorY++;
+							PlayUISound(fxChangeColor, 0.5f);
 						}
 					}
 
@@ -1594,6 +1596,7 @@ int main(void) {
 						colorPickerTimer = 0;
 						if (selectedColorY > 0) {
 							selectedColorY--;
+							PlayUISound(fxChangeColor, 0.5f);
 						}
 					}
 
@@ -1602,6 +1605,7 @@ int main(void) {
 						colorPickerTimer = 0;
 						if (selectedColorX > 0) {
 							selectedColorX--;
+							PlayUISound(fxChangeColor, 0.5f);
 						}
 					}
 
@@ -1610,6 +1614,7 @@ int main(void) {
 						colorPickerTimer = 0;
 						if (selectedColorX < colorsPerCol - 1) {
 							selectedColorX++;
+							PlayUISound(fxChangeColor, 0.5f);
 						}
 					}
 
@@ -1886,6 +1891,7 @@ int main(void) {
 	UnloadSound(fxLand);
 	UnloadSound(fxUIHover);
 	UnloadSound(fxUIClick);
+	UnloadSound(fxChangeColor);
 
 	for (int i = 0; i < pickupPulsePool.length; i++) {
 		UnloadSound(pickupPulsePool.sounds[i]);
