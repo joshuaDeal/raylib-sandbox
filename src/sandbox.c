@@ -1802,7 +1802,7 @@ int main(void) {
 			case GAMEPLAY: {
 				// Construct viewport.
 				BeginTextureMode(viewport);
-					ClearBackground(BLACK);
+					ClearBackground(SKYBLUE);
 
 					BeginMode3D(genericCamera);
 
@@ -1829,7 +1829,7 @@ int main(void) {
 				EndTextureMode();
 
 				BeginDrawing();
-					ClearBackground(BLACK);
+					ClearBackground(SKYBLUE);
 
 					BeginMode3D(playerCamera);
 
