@@ -26,6 +26,10 @@ There is also a makefile.
 #define MAX_DONUTS 100
 #define MAX_SOUND_POOL_SIZE 4
 
+#define RLIGHTS_IMPLEMENTATION
+#include "rlights.h"
+#define GLSL_VERSION 330
+
 typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
 typedef enum MenuScreen { MAIN_MENU, LOAD_GAME } MenuScreen;
 typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
@@ -86,6 +90,7 @@ typedef struct Pickup {
 	bool bounceUp;
 	float bounceTime;
 	float bounceDuration;
+	Light light;
 } Pickup;
 
 // Save game to save file
@@ -746,8 +751,8 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 	}
 }
 
-void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool) {
-	for (int o = 0; o < lenPickups; o++){
+void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool, Shader lightShader) {
+	for (int o = 0; o < lenPickups; o++) {
 		// Calculate angle
 		pickups[o].spin += pickups[o].spinSpeed;
 		if (pickups[o].spin > 360.0f) pickups[o].spin = 0.0f;
@@ -780,6 +785,9 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 			pickups[o].bounceTime = 0.0f;
 			pickups[o].bounceUp = !pickups[o].bounceUp;
 		}
+
+		// Update lights
+		UpdateLightValues(lightShader, pickups[o].light);
 	}
 
 	// Play idle sounds
@@ -1053,6 +1061,10 @@ int main(void) {
 	// Disable default raylib escape key functionality 
 	SetExitKey(KEY_NULL);
 
+	// Shaders
+	Shader basicLightingShader = LoadShader("assets/shaders/lighting.vs", "assets/shaders/lighting.fs");
+	basicLightingShader.locs[SHADER_LOC_VECTOR_VIEW] = GetShaderLocation(basicLightingShader, "viewPos");
+
 	// Save files
 	FilePathList saveFiles = LoadSaveFiles();
 
@@ -1114,7 +1126,17 @@ int main(void) {
 
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
+
+	// Use basic lighting shader for model's material shader
+	for (int i = 0; i < donutModel.materialCount; i++) {
+		donutModel.materials[i].shader = basicLightingShader;
+	}
+
 	donutModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
+
+	// Ambient lighting
+	int ambientLoc = GetShaderLocation(basicLightingShader, "ambient");
+	SetShaderValue(basicLightingShader, ambientLoc, (float[4]){ 0.1f, 0.1f, 0.1f, 0.1f }, SHADER_UNIFORM_VEC4);
 
 	GameScreen screen = MENU;
 	MenuScreen menuScreen = MAIN_MENU;
@@ -1338,12 +1360,14 @@ int main(void) {
 	player.yaw = 0.0f;
 	player.pitch = 0.0f;
 	player.model = LoadModelFromMesh(GenMeshCube(player.size.x, player.size.y, player.size.z));
+	for (int i = 0; i < player.model.materialCount; i++) player.model.materials[i].shader = basicLightingShader;
 	player.footstepTimer = 0.0f;
 	player.jumpBoost = false;
 	player.landFlag = false;
 
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
+	for (int i = 0; i < boxModel.materialCount; i++) boxModel.materials[i].shader = basicLightingShader;
 	int lenBoxes = 7;
 	Box boxes[MAX_BOXES];
 	boxes[0] = (Box){(Vector3){ -1.0f, 0.5f, -4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, BLUE, 100.0f};
@@ -1358,11 +1382,17 @@ int main(void) {
 	Pickup donuts[MAX_DONUTS];
 	int lenDonuts = 6;
 	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 	donuts[4] = (Pickup){ .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 	donuts[5] = (Pickup){ .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
 
 	float gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
@@ -1619,7 +1649,7 @@ int main(void) {
 					}
 
 					// Update pickups
-					UpdatePickups(donuts, lenDonuts, playerCamera, &pickupPulsePool);
+					UpdatePickups(donuts, lenDonuts, playerCamera, &pickupPulsePool, basicLightingShader);
 				}
 
 				// Game Paused
@@ -1719,6 +1749,11 @@ int main(void) {
 						default: break;
 					}
 				}
+
+				// Update shaders
+				float playerCameraPos[3] = { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z };
+				SetShaderValue(basicLightingShader, basicLightingShader.locs[SHADER_LOC_VECTOR_VIEW], playerCameraPos, SHADER_UNIFORM_VEC3);
+
 			} break;
 
 			default: break;
@@ -1770,20 +1805,26 @@ int main(void) {
 					ClearBackground(BLACK);
 
 					BeginMode3D(genericCamera);
-						// Draw player
-						DrawModelEx(player.model, player.position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(player.yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, RED);
 
-						// Draw boxes
-						DrawBoxes(boxes, lenBoxes);
+						BeginShaderMode(basicLightingShader);
 
-						// Draw pickups
-						DrawPickups(donuts, lenDonuts);
+							// Draw player
+							DrawModelEx(player.model, player.position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(player.yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, RED);
+
+							// Draw boxes
+							DrawBoxes(boxes, lenBoxes);
+
+							// Draw pickups
+							DrawPickups(donuts, lenDonuts);
+
+						EndShaderMode();
 
 						// Draw floor
 						DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
 
 						// Draw boxClickRay
 						DrawRay(boxClickRay, RED);
+
 					EndMode3D();
 				EndTextureMode();
 
@@ -1791,17 +1832,23 @@ int main(void) {
 					ClearBackground(BLACK);
 
 					BeginMode3D(playerCamera);
+
+						BeginShaderMode(basicLightingShader);
+	
+							// Draw boxes
+							DrawBoxes(boxes, lenBoxes);
+	
+							// Draw pickups
+							DrawPickups(donuts, lenDonuts);
+
+						EndShaderMode();
+
 						// Draw floor 
 						DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
 
-						// Draw boxes
-						DrawBoxes(boxes, lenBoxes);
-
-						// Draw pickups
-						DrawPickups(donuts, lenDonuts);
-
 						// Draw boxClickRay
 						DrawRay(boxClickRay, RED);
+
 					EndMode3D();
 
 					// Draw crosshair
@@ -1875,6 +1922,8 @@ int main(void) {
 	}
 
 	// De-initialization
+	UnloadShader(basicLightingShader);
+
 	UnloadModel(player.model);
 	UnloadModel(boxModel);
 	UnloadModel(donutModel);
