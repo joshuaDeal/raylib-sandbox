@@ -15,7 +15,7 @@ out vec4 finalColor;
 
 // NOTE: Add your custom variables here
 
-#define     MAX_LIGHTS              4
+#define     MAX_LIGHTS              100
 #define     LIGHT_DIRECTIONAL       0
 #define     LIGHT_POINT             1
 
@@ -25,6 +25,7 @@ struct Light {
     vec3 position;
     vec3 target;
     vec4 color;
+    float intensity;
 };
 
 // Input lighting values
@@ -62,7 +63,7 @@ void main()
             }
 
             float NdotL = max(dot(normal, light), 0.0);
-            lightDot += lights[i].color.rgb*NdotL;
+            lightDot += lights[i].color.rgb * NdotL * lights[i].intensity;
 
             float specCo = 0.0;
             if (NdotL > 0.0) specCo = pow(max(0.0, dot(viewD, reflect(-(light), normal))), 16.0); // 16 refers to shine

@@ -1382,17 +1382,17 @@ int main(void) {
 	Pickup donuts[MAX_DONUTS];
 	int lenDonuts = 6;
 	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 	donuts[4] = (Pickup){ .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 	donuts[5] = (Pickup){ .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, basicLightingShader);
+	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
 
 	float gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
