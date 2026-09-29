@@ -38,7 +38,7 @@ typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
 typedef enum InventoryItems {
 	INVENTORY_NOTHING = 0,
 	INVENTORY_BUILD_TOOL = 1,
-	INVENTORY_GUN = 2
+	INVENTORY_TESPECIAL = 2
 } InventoryItems;
 
 typedef struct SoundPool {
@@ -1301,13 +1301,17 @@ int main(void) {
 
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
-
 	// Use basic lighting shader for model's material shader
 	for (int i = 0; i < donutModel.materialCount; i++) {
 		donutModel.materials[i].shader = basicLightingShader;
 	}
-
 	donutModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
+
+	Model teSpecialModel = LoadModel("assets/models/38-special.glb");
+	for (int i = 0; i < teSpecialModel.materialCount; i++) {
+		teSpecialModel.materials[i].shader = basicLightingShader;
+	}
+
 
 	// Ambient lighting
 	int ambientLoc = GetShaderLocation(basicLightingShader, "ambient");
@@ -1862,6 +1866,64 @@ int main(void) {
 							// Draw player
 							DrawModelEx(player.model, player.position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(player.yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, RED);
 
+							// Draw player inventory item
+							switch (player.inventoryIndex) {
+								case INVENTORY_NOTHING: {
+									break;
+								}; break;
+								case INVENTORY_BUILD_TOOL: {
+									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+									Vector3 up = Vector3CrossProduct(right, forward);
+									
+									Vector3 boxOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.5f));
+									boxOffset = Vector3Add(boxOffset, Vector3Scale(forward, 1.0f));
+									
+									Vector3 boxPosition = Vector3Add(playerCamera.position,	boxOffset);
+
+									// Orient the box to match the camera
+									Matrix rotation = {
+										right.x, up.x, -forward.x, 0.0f,
+										right.y, up.y, -forward.y, 0.0f,
+										right.z, up.z, -forward.z, 0.0f,
+										0.0f, 0.0f, 0.0f, 1.0f
+									};
+
+									Matrix oldTransform = boxModel.transform;
+									boxModel.transform = MatrixMultiply(oldTransform, rotation);
+									
+									DrawModel(boxModel, boxPosition, BOX_SIZE * 0.5f, colors[selectedColorX][selectedColorY]);
+
+									boxModel.transform = oldTransform;
+								}; break;
+								case INVENTORY_TESPECIAL: {
+									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+									Vector3 up = Vector3CrossProduct(right, forward);
+									
+									Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
+									itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
+									
+									Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+									// Orient the box to match the camera
+									Matrix rotation = {
+										right.x, up.x, -forward.x, 0.0f,
+										right.y, up.y, -forward.y, 0.0f,
+										right.z, up.z, -forward.z, 0.0f,
+										0.0f, 0.0f, 0.0f, 1.0f
+									};
+
+									Matrix oldTransform = teSpecialModel.transform;
+									teSpecialModel.transform = MatrixMultiply(oldTransform, rotation);
+									
+									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
+
+									teSpecialModel.transform = oldTransform;
+								}; break;
+								default: break;
+							}
+
 							// Draw boxes
 							DrawBoxes(boxes, lenBoxes);
 
@@ -1891,6 +1953,64 @@ int main(void) {
 	
 							// Draw pickups
 							DrawPickups(donuts, lenDonuts);
+
+							// Draw player inventory item
+							switch (player.inventoryIndex) {
+								case INVENTORY_NOTHING: {
+									break;
+								}; break;
+								case INVENTORY_BUILD_TOOL: {
+									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+									Vector3 up = Vector3CrossProduct(right, forward);
+									
+									Vector3 boxOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.5f));
+									boxOffset = Vector3Add(boxOffset, Vector3Scale(forward, 1.0f));
+									
+									Vector3 boxPosition = Vector3Add(playerCamera.position,	boxOffset);
+
+									// Orient the box to match the camera
+									Matrix rotation = {
+										right.x, up.x, -forward.x, 0.0f,
+										right.y, up.y, -forward.y, 0.0f,
+										right.z, up.z, -forward.z, 0.0f,
+										0.0f, 0.0f, 0.0f, 1.0f
+									};
+
+									Matrix oldTransform = boxModel.transform;
+									boxModel.transform = MatrixMultiply(oldTransform, rotation);
+									
+									DrawModel(boxModel, boxPosition, BOX_SIZE * 0.5f, colors[selectedColorX][selectedColorY]);
+
+									boxModel.transform = oldTransform;
+								}; break;
+								case INVENTORY_TESPECIAL: {
+									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+									Vector3 up = Vector3CrossProduct(right, forward);
+									
+									Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
+									itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
+									
+									Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+									// Orient the box to match the camera
+									Matrix rotation = {
+										right.x, up.x, -forward.x, 0.0f,
+										right.y, up.y, -forward.y, 0.0f,
+										right.z, up.z, -forward.z, 0.0f,
+										0.0f, 0.0f, 0.0f, 1.0f
+									};
+
+									Matrix oldTransform = teSpecialModel.transform;
+									teSpecialModel.transform = MatrixMultiply(oldTransform, rotation);
+									
+									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
+
+									teSpecialModel.transform = oldTransform;
+								}; break;
+								default: break;
+							}
 
 						EndShaderMode();
 
@@ -1939,7 +2059,7 @@ int main(void) {
 						switch (player.inventoryIndex) {
 							case INVENTORY_NOTHING: itemText = "None"; break;
 							case INVENTORY_BUILD_TOOL: itemText = "Build Tool"; break;
-							case INVENTORY_GUN: itemText = "Gun"; break;
+							case INVENTORY_TESPECIAL: itemText = ".38 Special"; break;
 							default: break;
 						}
 
@@ -1992,6 +2112,7 @@ int main(void) {
 	UnloadModel(player.model);
 	UnloadModel(boxModel);
 	UnloadModel(donutModel);
+	UnloadModel(teSpecialModel);
 
 	UnloadRenderTexture(viewport);
 
