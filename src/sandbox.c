@@ -1777,6 +1777,9 @@ int main(void) {
 							showInventory = true;
 							showInventoryTimer = 0;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
+						} else {
+							player.inventoryIndex = 0;
+							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
 					else if (wheel < 0) {
@@ -1784,6 +1787,9 @@ int main(void) {
 							player.inventoryIndex--;
 							showInventory = true;
 							showInventoryTimer = 0;
+							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
+						} else {
+							player.inventoryIndex = NUM_INVENTORY_ITEMS -1;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
