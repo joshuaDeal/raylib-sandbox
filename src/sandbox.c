@@ -708,6 +708,100 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 	}
 }
 
+void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
+	// Get position of item
+	Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
+	Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, listener.up));
+	Vector3 up = Vector3CrossProduct(right, forward);
+	
+	Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
+	itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
+	
+	Vector3 itemPosition = Vector3Add(listener.position, itemOffset);
+
+	// Release pool slots whose sounds have finished playing.
+	for (int i = 0; i < soundPool->length; i++) {
+
+		// Nothing is using this slot.
+		if (soundPool->owner[i] == -1) continue;
+
+		// The sound has finished, so the pool slot is available again.
+		if (!IsSoundPlaying(soundPool->sounds[i])) {
+			soundPool->owner[i] = -1;
+		}
+	}
+
+	// Update the position/volume/panning of sounds that are currently assigned.
+	for (int i = 0; i < soundPool->length; i++) {
+		int soundIndex = soundPool->owner[i];
+
+		// This sound is currently unused.
+		if (soundIndex == -1) continue;
+
+		UpdatePositionalSound(soundPool->sounds[i], listener, itemPosition, 1.0f);
+	}
+
+	// Default to index 0.
+	int freeSoundIndex = 0;
+
+	// Find an unused sound in the pool.
+	for (int i = 0; i < soundPool->length; i++) {
+		if (soundPool->owner[i] == -1) {
+			freeSoundIndex = i;
+		}
+	}
+
+	// Set its initial positional properties before playing.
+	UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, itemPosition, 1.0f);
+
+	soundPool->owner[freeSoundIndex] = 0;
+
+	PlaySound(soundPool->sounds[freeSoundIndex]);
+}
+
+void UpdateItemTeSpecial(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool) {
+	// Shoot boxes
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+		*boxClickRay = (Ray){ playerCamera.position, Vector3Normalize(direction) };
+
+		float closestDistance = 30.0f;
+		int closestBox = -1;
+
+		// Check collision between boxClickRay and boxes.
+		for (int o = 0; o < *lenBoxes; o++) {
+			boxClickCollision = GetRayCollisionBox(*boxClickRay, (BoundingBox){(Vector3){ boxes[o].position.x - boxes[o].size.x / 2, boxes[o].position.y - boxes[o].size.y / 2, boxes[o].position.z - boxes[o].size.z / 2 }, (Vector3){ boxes[o].position.x + boxes[o].size.x / 2, boxes[o].position.y + boxes[o].size.y / 2, boxes[o].position.z + boxes[o].size.z / 2 }});
+
+			if (boxClickCollision.hit && boxClickCollision.distance <= closestDistance) {
+				closestDistance = boxClickCollision.distance;
+				closestBox = o;
+			}
+		}
+
+		if (closestBox != -1) {
+			// Damage box
+			boxes[closestBox].health -= 16.67f;
+			boxes[closestBox].color = (Color){ boxes[closestBox].color.r * 0.75f, boxes[closestBox].color.g * 0.75f, boxes[closestBox].color.b * 0.75f, 255};
+			PlayPositionalSound(fxHitBox, playerCamera, boxes[closestBox].position, 7.0f);
+
+			// Delete box if it is out of health
+			if (boxes[closestBox].health <= 0.0f) {
+				TraceLog(LOG_INFO, "Attempting to delete boxes[%d]...", closestBox);
+
+				*lenBoxes = DeleteBox(boxes, closestBox, *lenBoxes);
+				PlayPositionalSound(fxBreakBox, playerCamera, boxes[closestBox].position, 7.0f);
+
+				for (int i = 0; i < *lenBoxes; i++) {
+					TraceLog(LOG_INFO, "boxes[%d]: (%.2f, %.2f, %.2f)", i, boxes[i].position.x, boxes[i].position.y, boxes[i].position.z);
+				}
+			}
+		}
+
+		// Play sound
+		UpdateItemSounds(teShotPool, playerCamera);
+	}
+}
+
 void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Sound walkSound, Sound jumpSound, Sound landSound) {
 	float delta = GetFrameTime();
 
@@ -1299,6 +1393,12 @@ int main(void) {
 		pickupPulsePool.owner[i] = -1;
 	}
 
+	SoundPool teShotPool = { .length = MAX_SOUND_POOL_SIZE };
+	for (int i = 0; i < teShotPool.length; i++) {
+		teShotPool.sounds[i] = LoadSound("assets/audio/38-shot.ogg");
+		teShotPool.owner[i] = -1;
+	}
+
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
 	// Use basic lighting shader for model's material shader
@@ -1693,6 +1793,10 @@ int main(void) {
 					} else if (colorPickerTimer != 0) {
 						colorPickerTimer = 0;
 						showColorPicker = false;
+					}
+
+					if (player.inventoryIndex == INVENTORY_TESPECIAL && player.inventory[player.inventoryIndex]) {
+						UpdateItemTeSpecial(boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool);
 					}
 
 					if (showInventory == true) {
@@ -2130,6 +2234,10 @@ int main(void) {
 
 	for (int i = 0; i < pickupPulsePool.length; i++) {
 		UnloadSound(pickupPulsePool.sounds[i]);
+	}
+
+	for (int i = 0; i < teShotPool.length; i++) {
+		UnloadSound(teShotPool.sounds[i]);
 	}
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
