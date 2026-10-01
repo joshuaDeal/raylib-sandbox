@@ -1779,6 +1779,8 @@ int main(void) {
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						} else {
 							player.inventoryIndex = 0;
+							showInventory = true;
+							showInventoryTimer = 0;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
@@ -1790,6 +1792,8 @@ int main(void) {
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						} else {
 							player.inventoryIndex = NUM_INVENTORY_ITEMS -1;
+							showInventory = true;
+							showInventoryTimer = 0;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
