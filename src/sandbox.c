@@ -765,7 +765,7 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
 	PlaySound(soundPool->sounds[freeSoundIndex]);
 }
 
-void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool, SoundPool *reloadPool) {
+void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool) {
 	// Shoot boxes
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->roundsLoaded > 0) {
 		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
@@ -807,6 +807,9 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 
 		// Play sound
 		UpdateItemSounds(teShotPool, playerCamera);
+	}
+	else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+		UpdateItemSounds(triggerPullPool, playerCamera);
 	}
 
 	// Reload
@@ -1432,6 +1435,12 @@ int main(void) {
 		reloadPool.owner[i] = -1;
 	}
 
+	SoundPool triggerPullPool = { .length = MAX_SOUND_POOL_SIZE };
+	for (int i = 0; i < triggerPullPool.length; i++) {
+		triggerPullPool.sounds[i] = LoadSound("assets/audio/trigger-pull.ogg");
+		triggerPullPool.owner[i] = -1;
+	}
+
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
 	// Use basic lighting shader for model's material shader
@@ -1843,7 +1852,7 @@ int main(void) {
 					}
 
 					if (player.inventoryIndex == INVENTORY_TESPECIAL && player.inventory[player.inventoryIndex]) {
-						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool, &reloadPool);
+						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool, &reloadPool, &triggerPullPool);
 						showTeSpecialHud = true;
 					} else {
 						showTeSpecialHud = false;
@@ -2298,6 +2307,10 @@ int main(void) {
 
 	for (int i = 0; i < reloadPool.length; i++) {
 		UnloadSound(reloadPool.sounds[i]);
+	}
+
+	for (int i = 0; i < triggerPullPool.length; i++) {
+		UnloadSound(triggerPullPool.sounds[i]);
 	}
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
