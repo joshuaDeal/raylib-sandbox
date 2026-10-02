@@ -548,7 +548,7 @@ bool CanPlaceBox(Box boxes[], int lenBoxes, Vector3 position, Vector3 size) {
 	return true;
 }
 
-void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *selectedColorX, int *selectedColorY, bool *showColorPicker, int *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera playerCamera, Character player, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor) {
+void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *selectedColorX, int *selectedColorY, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera playerCamera, Character player, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor) {
 	// Click on boxes
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
@@ -669,17 +669,17 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 
 	// Color picker/selector
 	if (*showColorPicker) {
-		(*colorPickerTimer)++;
+		*colorPickerTimer += GetFrameTime();
 	}
 
-	if (*colorPickerTimer >= 180) {
+	if (*colorPickerTimer >= 3.0f) {
 		*showColorPicker = false;
-		*colorPickerTimer = 0;
+		*colorPickerTimer = 0.0f;
 	}
 
 	if (IsKeyPressed(KEY_DOWN)) {
 		*showColorPicker = true;
-		*colorPickerTimer = 0;
+		*colorPickerTimer = 0.0f;
 		if (*selectedColorY < colorsPerRow - 1) {
 			(*selectedColorY)++;
 			PlayUISound(fxChangeColor, 0.5f);
@@ -688,7 +688,7 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 
 	if (IsKeyPressed(KEY_UP)) {
 		*showColorPicker = true;
-		*colorPickerTimer = 0;
+		*colorPickerTimer = 0.0f;
 		if (*selectedColorY > 0) {
 			(*selectedColorY)--;
 			PlayUISound(fxChangeColor, 0.5f);
@@ -697,7 +697,7 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 
 	if (IsKeyPressed(KEY_LEFT)) {
 		*showColorPicker = true;
-		*colorPickerTimer = 0;
+		*colorPickerTimer = 0.0f;
 		if (*selectedColorX > 0) {
 			(*selectedColorX)--;
 			PlayUISound(fxChangeColor, 0.5f);
@@ -706,7 +706,7 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 
 	if (IsKeyPressed(KEY_RIGHT)) {
 		*showColorPicker = true;
-		*colorPickerTimer = 0;
+		*colorPickerTimer = 0.0f;
 		if (*selectedColorX < colorsPerCol - 1) {
 			(*selectedColorX)++;
 			PlayUISound(fxChangeColor, 0.5f);
@@ -1649,11 +1649,11 @@ int main(void) {
 	int selectedColorX = 3;
 	int selectedColorY = 3;
 	bool showColorPicker = false;
-	int colorPickerTimer = 0;
+	float colorPickerTimer = 0.0f;
 
 	// Inventory HUD
 	bool showInventory = false;
-	int showInventoryTimer = 0;
+	float showInventoryTimer = 0.0f;
 
 	// Create generic camera
 	Camera3D genericCamera = { 0 };
@@ -1821,12 +1821,12 @@ int main(void) {
 						if (player.inventoryIndex < NUM_INVENTORY_ITEMS - 1) {
 							player.inventoryIndex++;
 							showInventory = true;
-							showInventoryTimer = 0;
+							showInventoryTimer = 0.0f;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						} else {
 							player.inventoryIndex = 0;
 							showInventory = true;
-							showInventoryTimer = 0;
+							showInventoryTimer = 0.0f;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
@@ -1834,20 +1834,20 @@ int main(void) {
 						if (player.inventoryIndex > 0) {
 							player.inventoryIndex--;
 							showInventory = true;
-							showInventoryTimer = 0;
+							showInventoryTimer = 0.0f;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						} else {
 							player.inventoryIndex = NUM_INVENTORY_ITEMS -1;
 							showInventory = true;
-							showInventoryTimer = 0;
+							showInventoryTimer = 0.0f;
 							TraceLog(LOG_INFO, "Player inventory index is %d.", player.inventoryIndex);
 						}
 					}
 
 					if (player.inventoryIndex == INVENTORY_BUILD_TOOL && player.inventory[player.inventoryIndex]) {
 						UpdateItemBuildTool(boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorX, &selectedColorY, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, player, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor);
-					} else if (colorPickerTimer != 0) {
-						colorPickerTimer = 0;
+					} else if (colorPickerTimer != 0.0f) {
+						colorPickerTimer = 0.0f;
 						showColorPicker = false;
 					}
 
@@ -1859,8 +1859,8 @@ int main(void) {
 					}
 
 					if (showInventory == true) {
-						if (showInventoryTimer <= 180) {
-							showInventoryTimer++;
+						if (showInventoryTimer <= 3.0f) {
+							showInventoryTimer += GetFrameTime();
 						} else {
 							showInventory = false;
 						}
