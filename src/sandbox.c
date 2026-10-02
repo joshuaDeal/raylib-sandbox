@@ -818,15 +818,15 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 	// Reload
 	if (IsKeyPressed(KEY_R)) {
 		if (teSpecial->extraRounds > 0 && teSpecial->roundsLoaded != teSpecial->loadCapacity) {
-			if (teSpecial->extraRounds > teSpecial->loadCapacity) {
+			if (teSpecial->roundsLoaded + teSpecial->extraRounds <= 6) {
+				teSpecial->roundsLoaded += teSpecial->extraRounds;
+				teSpecial->extraRounds -= teSpecial->extraRounds;
+			}
+			else {
 				int roundsToAdd = teSpecial->loadCapacity - teSpecial->roundsLoaded;
 
 				teSpecial->roundsLoaded += roundsToAdd;
 				teSpecial->extraRounds -= roundsToAdd;
-			}
-			else {
-				teSpecial->roundsLoaded += teSpecial->extraRounds;
-				teSpecial->extraRounds -= teSpecial->extraRounds;
 			}
 
 			teSpecial->coolDownTimer = 1.5f;
