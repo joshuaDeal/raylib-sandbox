@@ -103,7 +103,7 @@ typedef struct Pickup {
 } Pickup;
 
 typedef struct TeSpecial {
-	int loadCapacity;
+	const int loadCapacity;
 	int roundsLoaded;
 	int extraRounds;
 } TeSpecial;
@@ -765,7 +765,7 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
 	PlaySound(soundPool->sounds[freeSoundIndex]);
 }
 
-void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool) {
+void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool, SoundPool *reloadPool) {
 	// Shoot boxes
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->roundsLoaded > 0) {
 		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
@@ -811,9 +811,9 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 
 	// Reload
 	if (IsKeyPressed(KEY_R)) {
-		if (teSpecial->extraRounds > 0) {
-			if (teSpecial->extraRounds > 6) {
-				int roundsToAdd = 6 - teSpecial->roundsLoaded;
+		if (teSpecial->extraRounds > 0 && teSpecial->roundsLoaded != teSpecial->loadCapacity) {
+			if (teSpecial->extraRounds > teSpecial->loadCapacity) {
+				int roundsToAdd = teSpecial->loadCapacity - teSpecial->roundsLoaded;
 
 				teSpecial->roundsLoaded += roundsToAdd;
 				teSpecial->extraRounds -= roundsToAdd;
@@ -822,6 +822,9 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 				teSpecial->roundsLoaded += teSpecial->extraRounds;
 				teSpecial->extraRounds -= teSpecial->extraRounds;
 			}
+
+			// Play reload sound
+			UpdateItemSounds(reloadPool, playerCamera);
 		}
 	}
 }
@@ -1423,6 +1426,12 @@ int main(void) {
 		teShotPool.owner[i] = -1;
 	}
 
+	SoundPool reloadPool = { .length = MAX_SOUND_POOL_SIZE };
+	for (int i = 0; i < reloadPool.length; i++) {
+		reloadPool.sounds[i] = LoadSound("assets/audio/reload.ogg");
+		reloadPool.owner[i] = -1;
+	}
+
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
 	// Use basic lighting shader for model's material shader
@@ -1834,7 +1843,7 @@ int main(void) {
 					}
 
 					if (player.inventoryIndex == INVENTORY_TESPECIAL && player.inventory[player.inventoryIndex]) {
-						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool);
+						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool, &reloadPool);
 						showTeSpecialHud = true;
 					} else {
 						showTeSpecialHud = false;
@@ -2285,6 +2294,10 @@ int main(void) {
 
 	for (int i = 0; i < teShotPool.length; i++) {
 		UnloadSound(teShotPool.sounds[i]);
+	}
+
+	for (int i = 0; i < reloadPool.length; i++) {
+		UnloadSound(reloadPool.sounds[i]);
 	}
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
