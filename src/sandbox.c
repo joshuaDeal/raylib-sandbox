@@ -429,7 +429,7 @@ void DrawFloor(int slicesX, int slicesZ, float spacing, float xMin, float zMin) 
 	}
 }
 
-void UpdatePositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance) {
+void UpdatePositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance, float boost) {
 	// Calculate direction and distance
 	Vector3 direction = Vector3Subtract(position, listener.position);
 	float distance = Vector3Length(direction);
@@ -451,12 +451,12 @@ void UpdatePositionalSound(Sound sound, Camera listener, Vector3 position, float
 	float pan = 0.5f + 0.5f*Vector3DotProduct(normalizedDirection, right);
 
 	// Apply changes to sound
-	SetSoundVolume(sound, attenuation);
+	SetSoundVolume(sound, attenuation * boost);
 	SetSoundPan(sound, pan);
 }
 
-void PlayPositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance) {
-	UpdatePositionalSound(sound, listener, position, maxDistance);
+void PlayPositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance, float boost) {
+	UpdatePositionalSound(sound, listener, position, maxDistance, boost);
 	PlaySound(sound);
 }
 
@@ -571,14 +571,14 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 			// Damage box
 			boxes[closestBox].health -= 33.34f;
 			boxes[closestBox].color = (Color){ boxes[closestBox].color.r * 0.5f, boxes[closestBox].color.g * 0.5f, boxes[closestBox].color.b * 0.5f, 255};
-			PlayPositionalSound(fxHitBox, playerCamera, boxes[closestBox].position, 7.0f);
+			PlayPositionalSound(fxHitBox, playerCamera, boxes[closestBox].position, 7.0f, 1.0f);
 
 			// Delete box if it is out of health
 			if (boxes[closestBox].health <= 0.0f) {
 				TraceLog(LOG_INFO, "Attempting to delete boxes[%d]...", closestBox);
 
 				*lenBoxes = DeleteBox(boxes, closestBox, *lenBoxes);
-				PlayPositionalSound(fxBreakBox, playerCamera, boxes[closestBox].position, 7.0f);
+				PlayPositionalSound(fxBreakBox, playerCamera, boxes[closestBox].position, 7.0f, 1.0f);
 
 				for (int i = 0; i < *lenBoxes; i++) {
 					TraceLog(LOG_INFO, "boxes[%d]: (%.2f, %.2f, %.2f)", i, boxes[i].position.x, boxes[i].position.y, boxes[i].position.z);
@@ -650,7 +650,7 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 					TraceLog(LOG_INFO, "Attempting to create boxes[%d]...", *lenBoxes);
 
 					*lenBoxes = AddBox(boxes, *lenBoxes, newBoxPosition, colors[*selectedColorX][*selectedColorY], boxModel, 100.0f);
-					PlayPositionalSound(fxPlaceBox, playerCamera, newBoxPosition, 7.0f);
+					PlayPositionalSound(fxPlaceBox, playerCamera, newBoxPosition, 7.0f, 1.0f);
 
 					for (int i = 0; i < *lenBoxes; i++) {
 						TraceLog(LOG_INFO, "boxes[%d]: (%.2f, %.2f, %.2f)", i, boxes[i].position.x, boxes[i].position.y, boxes[i].position.z);
@@ -714,7 +714,7 @@ void UpdateItemBuildTool(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 	}
 }
 
-void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
+void UpdateItemSounds(SoundPool *soundPool, Camera listener, float maxDistance, float boost) {
 	// Get position of item
 	Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));
 	Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, listener.up));
@@ -744,7 +744,7 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
 		// This sound is currently unused.
 		if (soundIndex == -1) continue;
 
-		UpdatePositionalSound(soundPool->sounds[i], listener, itemPosition, 1.0f);
+		UpdatePositionalSound(soundPool->sounds[i], listener, itemPosition, maxDistance, boost);
 	}
 
 	// Default to index 0.
@@ -758,7 +758,7 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
 	}
 
 	// Set its initial positional properties before playing.
-	UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, itemPosition, 1.0f);
+	UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, itemPosition, maxDistance, boost);
 
 	soundPool->owner[freeSoundIndex] = 0;
 
@@ -788,14 +788,14 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 			// Damage box
 			boxes[closestBox].health -= 16.67f;
 			boxes[closestBox].color = (Color){ boxes[closestBox].color.r * 0.75f, boxes[closestBox].color.g * 0.75f, boxes[closestBox].color.b * 0.75f, 255};
-			PlayPositionalSound(fxHitBox, playerCamera, boxes[closestBox].position, 7.0f);
+			PlayPositionalSound(fxHitBox, playerCamera, boxes[closestBox].position, 7.0f, 1.0f);
 
 			// Delete box if it is out of health
 			if (boxes[closestBox].health <= 0.0f) {
 				TraceLog(LOG_INFO, "Attempting to delete boxes[%d]...", closestBox);
 
 				*lenBoxes = DeleteBox(boxes, closestBox, *lenBoxes);
-				PlayPositionalSound(fxBreakBox, playerCamera, boxes[closestBox].position, 7.0f);
+				PlayPositionalSound(fxBreakBox, playerCamera, boxes[closestBox].position, 7.0f, 1.0f);
 
 				for (int i = 0; i < *lenBoxes; i++) {
 					TraceLog(LOG_INFO, "boxes[%d]: (%.2f, %.2f, %.2f)", i, boxes[i].position.x, boxes[i].position.y, boxes[i].position.z);
@@ -806,10 +806,10 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 		teSpecial->roundsLoaded--;
 
 		// Play sound
-		UpdateItemSounds(teShotPool, playerCamera);
+		UpdateItemSounds(teShotPool, playerCamera, 1.0f, 3.0f);
 	}
 	else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-		UpdateItemSounds(triggerPullPool, playerCamera);
+		UpdateItemSounds(triggerPullPool, playerCamera, 1.0f, 1.0f);
 	}
 
 	// Reload
@@ -827,7 +827,7 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 			}
 
 			// Play reload sound
-			UpdateItemSounds(reloadPool, playerCamera);
+			UpdateItemSounds(reloadPool, playerCamera, 1.0f, 1.0f);
 		}
 	}
 }
@@ -896,13 +896,13 @@ void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitiv
 			character->onGround = false;
 			character->jumpBoost = true;
 			character->landFlag = true;
-			PlayPositionalSound(jumpSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f);
+			PlayPositionalSound(jumpSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f, 1.0f);
 		}
 	}
 
 	// Landing sound
 	if (character->onGround && character->landFlag) {
-		PlayPositionalSound(landSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f);
+		PlayPositionalSound(landSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f, 1.0f);
 		character->landFlag = false;
 	}
 
@@ -996,7 +996,7 @@ void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitiv
 		character->footstepTimer -= delta;
 	
 		if (character->footstepTimer <= 0.0f) {
-			PlayPositionalSound(walkSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f);
+			PlayPositionalSound(walkSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f, 1.0f);
 	
 			// Tune these numbers to taste.
 			const float referenceSpeed = PLAYER_SPEED;
@@ -1052,7 +1052,7 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 		// This sound is currently unused.
 		if (pickupIndex == -1) continue;
 
-		UpdatePositionalSound(soundPool->sounds[i], listener, pickups[pickupIndex].position, 0.1f);
+		UpdatePositionalSound(soundPool->sounds[i], listener, pickups[pickupIndex].position, 0.1f, 1.0f);
 	}
 
 	// Find the closest pickup that isn't currently represented by a sound in the pool.
@@ -1112,7 +1112,7 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 		soundPool->owner[freeSoundIndex] = closestPickup;
 
 		// Set its initial positional properties before playing.
-		UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, pickups[closestPickup].position, 0.1f);
+		UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, pickups[closestPickup].position, 0.1f, 1.0f);
 		PlaySound(soundPool->sounds[freeSoundIndex]);
 	}
 }
