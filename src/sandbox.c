@@ -102,6 +102,12 @@ typedef struct Pickup {
 	Light light;
 } Pickup;
 
+typedef struct TeSpecial {
+	int loadCapacity;
+	int roundsLoaded;
+	int extraRounds;
+} TeSpecial;
+
 // Save game to save file
 bool SaveGameData(const char *filePath, const Character *player, const Box *boxes, int lenBoxes) {
 	// Create json root
@@ -759,9 +765,9 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener) {
 	PlaySound(soundPool->sounds[freeSoundIndex]);
 }
 
-void UpdateItemTeSpecial(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool) {
+void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool) {
 	// Shoot boxes
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->roundsLoaded > 0) {
 		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
 		*boxClickRay = (Ray){ playerCamera.position, Vector3Normalize(direction) };
 
@@ -797,8 +803,26 @@ void UpdateItemTeSpecial(Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollis
 			}
 		}
 
+		teSpecial->roundsLoaded--;
+
 		// Play sound
 		UpdateItemSounds(teShotPool, playerCamera);
+	}
+
+	// Reload
+	if (IsKeyPressed(KEY_R)) {
+		if (teSpecial->extraRounds > 0) {
+			if (teSpecial->extraRounds > 6) {
+				int roundsToAdd = 6 - teSpecial->roundsLoaded;
+
+				teSpecial->roundsLoaded += roundsToAdd;
+				teSpecial->extraRounds -= roundsToAdd;
+			}
+			else {
+				teSpecial->roundsLoaded += teSpecial->extraRounds;
+				teSpecial->extraRounds -= teSpecial->extraRounds;
+			}
+		}
 	}
 }
 
@@ -1650,6 +1674,10 @@ int main(void) {
 	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) player.inventory[i] = true;
 	player.inventoryIndex = 0;
 
+	// Create player weapons
+	TeSpecial playerTeSpecial = {6, 6, 144};
+	bool showTeSpecialHud = false;
+
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
 	for (int i = 0; i < boxModel.materialCount; i++) boxModel.materials[i].shader = basicLightingShader;
@@ -1806,7 +1834,10 @@ int main(void) {
 					}
 
 					if (player.inventoryIndex == INVENTORY_TESPECIAL && player.inventory[player.inventoryIndex]) {
-						UpdateItemTeSpecial(boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool);
+						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool);
+						showTeSpecialHud = true;
+					} else {
+						showTeSpecialHud = false;
 					}
 
 					if (showInventory == true) {
@@ -2178,6 +2209,12 @@ int main(void) {
 						}
 
 						DrawText(itemText, GetScreenWidth()/2 - MeasureText(itemText, 50)/2, GetScreenHeight()/2 - 150, 50, BLACK);
+					}
+
+					// .38 Special ammunition
+					if (showTeSpecialHud) {
+						const char* ammoText = TextFormat("%d/%d", playerTeSpecial.roundsLoaded, playerTeSpecial.extraRounds);
+						DrawText(ammoText, GetScreenWidth() - MeasureText(ammoText, 50) - (GetScreenWidth() / 100), GetScreenHeight() - 50, 50, BLACK);
 					}
 
 					// Game Paused
