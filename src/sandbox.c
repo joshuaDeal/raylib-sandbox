@@ -106,6 +106,7 @@ typedef struct TeSpecial {
 	const int loadCapacity;
 	int roundsLoaded;
 	int extraRounds;
+	float coolDownTimer;
 } TeSpecial;
 
 // Save game to save file
@@ -767,7 +768,7 @@ void UpdateItemSounds(SoundPool *soundPool, Camera listener, float maxDistance, 
 
 void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, Camera playerCamera, Sound fxBreakBox, Sound fxHitBox, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool) {
 	// Shoot boxes
-	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->roundsLoaded > 0) {
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->roundsLoaded > 0 && teSpecial->coolDownTimer <= 0.0f) {
 		Vector3 direction = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
 		*boxClickRay = (Ray){ playerCamera.position, Vector3Normalize(direction) };
 
@@ -805,10 +806,12 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 
 		teSpecial->roundsLoaded--;
 
+		teSpecial->coolDownTimer = 0.17f;
+
 		// Play sound
 		UpdateItemSounds(teShotPool, playerCamera, 1.0f, 3.0f);
 	}
-	else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+	else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && teSpecial->coolDownTimer <= 0.0f) {
 		UpdateItemSounds(triggerPullPool, playerCamera, 1.0f, 1.0f);
 	}
 
@@ -826,10 +829,18 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 				teSpecial->extraRounds -= teSpecial->extraRounds;
 			}
 
+			teSpecial->coolDownTimer = 1.5f;
+
 			// Play reload sound
 			UpdateItemSounds(reloadPool, playerCamera, 1.0f, 1.0f);
 		}
 	}
+
+	// Cool down timer
+	if (teSpecial->coolDownTimer > 0.0f) {
+		teSpecial->coolDownTimer -= GetFrameTime();
+	}
+	else if (teSpecial->coolDownTimer < 0.0f) teSpecial->coolDownTimer = 0.0f;
 }
 
 void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Sound walkSound, Sound jumpSound, Sound landSound) {
@@ -1693,7 +1704,7 @@ int main(void) {
 	player.inventoryIndex = 0;
 
 	// Create player weapons
-	TeSpecial playerTeSpecial = {6, 6, 144};
+	TeSpecial playerTeSpecial = {6, 6, 144, 0.0f};
 	bool showTeSpecialHud = false;
 
 	// Create boxes
