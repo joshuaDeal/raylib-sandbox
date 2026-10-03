@@ -1189,6 +1189,91 @@ void DrawPickups(Pickup pickups[], int lenPickups) {
 	}
 }
 
+void DrawItemTeSpecial(TeSpecial *teSpecial, Camera playerCamera, Model teSpecialModel, Model bigMuzzleFlareModel, Model littleMuzzleFlareModel) {
+	Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+	Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+	Vector3 up = Vector3CrossProduct(right, forward);
+	
+	Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
+	itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
+	
+	Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+	// Orient the box to match the camera
+	Matrix rotation = {
+		right.x, up.x, -forward.x, 0.0f,
+		right.y, up.y, -forward.y, 0.0f,
+		right.z, up.z, -forward.z, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	Matrix oldTransform = teSpecialModel.transform;
+	teSpecialModel.transform = MatrixMultiply(oldTransform, rotation);
+	
+	DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
+
+	teSpecialModel.transform = oldTransform;
+
+	// Draw muzzle flare
+	if (teSpecial->flareFrame == 1) {
+		Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+		Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+		Vector3 up = Vector3CrossProduct(right, forward);
+
+		Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+		itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+		
+		Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+		// Orient the box to match the camera
+		Matrix rotation = {
+			right.x, up.x, -forward.x, 0.0f,
+			right.y, up.y, -forward.y, 0.0f,
+			right.z, up.z, -forward.z, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		};
+
+		Matrix oldTransform = bigMuzzleFlareModel.transform;
+		bigMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+		
+		DrawModel(bigMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+		bigMuzzleFlareModel.transform = oldTransform;
+
+		teSpecial->flareLight.position = itemPosition;
+		teSpecial->flareLight.intensity = 0.1f;
+		teSpecial->flareLight.enabled = true;
+	}
+	else if (teSpecial->flareFrame == 2) {
+		Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+		Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+		Vector3 up = Vector3CrossProduct(right, forward);
+
+		Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+		itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+		
+		Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+		// Orient the box to match the camera
+		Matrix rotation = {
+			right.x, up.x, -forward.x, 0.0f,
+			right.y, up.y, -forward.y, 0.0f,
+			right.z, up.z, -forward.z, 0.0f,
+			0.0f, 0.0f, 0.0f, 1.0f
+		};
+
+		Matrix oldTransform = littleMuzzleFlareModel.transform;
+		littleMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+		
+		DrawModel(littleMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+		littleMuzzleFlareModel.transform = oldTransform;
+
+		teSpecial->flareLight.intensity = 0.05f;
+	}
+	else teSpecial->flareLight.enabled = false;
+}
+
 char *GetSaveDirectory(void) {
 	const char *workingDirectory = GetWorkingDirectory();
 	const char *suffix = "/save-data";
@@ -2096,86 +2181,7 @@ int main(void) {
 									boxModel.transform = oldTransform;
 								}; break;
 								case INVENTORY_TESPECIAL: {
-									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-									Vector3 up = Vector3CrossProduct(right, forward);
-									
-									Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
-									itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
-									
-									Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-									// Orient the item to match the camera
-									Matrix rotation = {
-										right.x, up.x, -forward.x, 0.0f,
-										right.y, up.y, -forward.y, 0.0f,
-										right.z, up.z, -forward.z, 0.0f,
-										0.0f, 0.0f, 0.0f, 1.0f
-									};
-
-									Matrix oldTransform = teSpecialModel.transform;
-									teSpecialModel.transform = MatrixMultiply(oldTransform, rotation);
-									
-									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
-
-									teSpecialModel.transform = oldTransform;
-
-									// Draw muzzle flare
-									if (playerTeSpecial.flareFrame == 1) {
-										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-										Vector3 up = Vector3CrossProduct(right, forward);
-
-										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
-										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
-										
-										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-										// Orient the box to match the camera
-										Matrix rotation = {
-											right.x, up.x, -forward.x, 0.0f,
-											right.y, up.y, -forward.y, 0.0f,
-											right.z, up.z, -forward.z, 0.0f,
-											0.0f, 0.0f, 0.0f, 1.0f
-										};
-
-										Matrix oldTransform = bigMuzzleFlareModel.transform;
-										bigMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
-										
-										DrawModel(bigMuzzleFlareModel, itemPosition, 1.0f, WHITE);
-
-										bigMuzzleFlareModel.transform = oldTransform;
-
-										playerTeSpecial.flareLight.position = itemPosition;
-										playerTeSpecial.flareLight.enabled = true;
-									}
-									else if (playerTeSpecial.flareFrame == 2) {
-										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-										Vector3 up = Vector3CrossProduct(right, forward);
-
-										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
-										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
-										
-										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-										// Orient the box to match the camera
-										Matrix rotation = {
-											right.x, up.x, -forward.x, 0.0f,
-											right.y, up.y, -forward.y, 0.0f,
-											right.z, up.z, -forward.z, 0.0f,
-											0.0f, 0.0f, 0.0f, 1.0f
-										};
-
-										Matrix oldTransform = littleMuzzleFlareModel.transform;
-										littleMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
-										
-										DrawModel(littleMuzzleFlareModel, itemPosition, 1.0f, WHITE);
-
-										littleMuzzleFlareModel.transform = oldTransform;
-
-									}
-									else playerTeSpecial.flareLight.enabled = false;
+									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
 								}; break;
 								default: break;
 							}
@@ -2241,87 +2247,8 @@ int main(void) {
 									boxModel.transform = oldTransform;
 								}; break;
 								case INVENTORY_TESPECIAL: {
-									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-									Vector3 up = Vector3CrossProduct(right, forward);
-									
-									Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.25f));
-									itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.0f));
-									
-									Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-									// Orient the box to match the camera
-									Matrix rotation = {
-										right.x, up.x, -forward.x, 0.0f,
-										right.y, up.y, -forward.y, 0.0f,
-										right.z, up.z, -forward.z, 0.0f,
-										0.0f, 0.0f, 0.0f, 1.0f
-									};
-
-									Matrix oldTransform = teSpecialModel.transform;
-									teSpecialModel.transform = MatrixMultiply(oldTransform, rotation);
-									
-									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
-
-									teSpecialModel.transform = oldTransform;
-
-									// Draw muzzle flare
-									if (playerTeSpecial.flareFrame == 1) {
-										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-										Vector3 up = Vector3CrossProduct(right, forward);
-
-										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
-										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
-										
-										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-										// Orient the box to match the camera
-										Matrix rotation = {
-											right.x, up.x, -forward.x, 0.0f,
-											right.y, up.y, -forward.y, 0.0f,
-											right.z, up.z, -forward.z, 0.0f,
-											0.0f, 0.0f, 0.0f, 1.0f
-										};
-
-										Matrix oldTransform = bigMuzzleFlareModel.transform;
-										bigMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
-										
-										DrawModel(bigMuzzleFlareModel, itemPosition, 1.0f, WHITE);
-
-										bigMuzzleFlareModel.transform = oldTransform;
-
-										playerTeSpecial.flareLight.position = itemPosition;
-										playerTeSpecial.flareLight.enabled = true;
-									}
-									else if (playerTeSpecial.flareFrame == 2) {
-										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-										Vector3 up = Vector3CrossProduct(right, forward);
-
-										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
-										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
-										
-										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
-
-										// Orient the box to match the camera
-										Matrix rotation = {
-											right.x, up.x, -forward.x, 0.0f,
-											right.y, up.y, -forward.y, 0.0f,
-											right.z, up.z, -forward.z, 0.0f,
-											0.0f, 0.0f, 0.0f, 1.0f
-										};
-
-										Matrix oldTransform = littleMuzzleFlareModel.transform;
-										littleMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
-										
-										DrawModel(littleMuzzleFlareModel, itemPosition, 1.0f, WHITE);
-
-										littleMuzzleFlareModel.transform = oldTransform;
-
-									}
-									else playerTeSpecial.flareLight.enabled = false;
-								}; break;
+									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
+								}
 								default: break;
 							}
 
