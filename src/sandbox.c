@@ -1881,6 +1881,10 @@ int main(void) {
 	while (!WindowShouldClose() && !exitWindow) {
 		// Update
 		// ------------------------------------------
+
+		// Basic fullscreen toggle
+		if (IsKeyPressed(KEY_F11)) ToggleFullscreen();
+
 		switch (screen) {
 			case MENU: {
 				switch (menuScreen) {
