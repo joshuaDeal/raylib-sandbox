@@ -1189,6 +1189,32 @@ void DrawPickups(Pickup pickups[], int lenPickups) {
 	}
 }
 
+void DrawItemBuildTool(Camera playerCamera, Model boxModel, Color colors[][8], int selectedColorX, int selectedColorY) {
+	Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+	Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+	Vector3 up = Vector3CrossProduct(right, forward);
+	
+	Vector3 boxOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.5f));
+	boxOffset = Vector3Add(boxOffset, Vector3Scale(forward, 1.0f));
+	
+	Vector3 boxPosition = Vector3Add(playerCamera.position,	boxOffset);
+
+	// Orient the box to match the camera
+	Matrix rotation = {
+		right.x, up.x, -forward.x, 0.0f,
+		right.y, up.y, -forward.y, 0.0f,
+		right.z, up.z, -forward.z, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f
+	};
+
+	Matrix oldTransform = boxModel.transform;
+	boxModel.transform = MatrixMultiply(oldTransform, rotation);
+	
+	DrawModel(boxModel, boxPosition, BOX_SIZE * 0.5f, colors[selectedColorX][selectedColorY]);
+
+	boxModel.transform = oldTransform;
+}
+
 void DrawItemTeSpecial(TeSpecial *teSpecial, Camera playerCamera, Model teSpecialModel, Model bigMuzzleFlareModel, Model littleMuzzleFlareModel) {
 	Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
 	Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
@@ -2156,29 +2182,7 @@ int main(void) {
 									break;
 								}; break;
 								case INVENTORY_BUILD_TOOL: {
-									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-									Vector3 up = Vector3CrossProduct(right, forward);
-									
-									Vector3 boxOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.5f));
-									boxOffset = Vector3Add(boxOffset, Vector3Scale(forward, 1.0f));
-									
-									Vector3 boxPosition = Vector3Add(playerCamera.position,	boxOffset);
-
-									// Orient the box to match the camera
-									Matrix rotation = {
-										right.x, up.x, -forward.x, 0.0f,
-										right.y, up.y, -forward.y, 0.0f,
-										right.z, up.z, -forward.z, 0.0f,
-										0.0f, 0.0f, 0.0f, 1.0f
-									};
-
-									Matrix oldTransform = boxModel.transform;
-									boxModel.transform = MatrixMultiply(oldTransform, rotation);
-									
-									DrawModel(boxModel, boxPosition, BOX_SIZE * 0.5f, colors[selectedColorX][selectedColorY]);
-
-									boxModel.transform = oldTransform;
+									DrawItemBuildTool(playerCamera, boxModel, colors, selectedColorX, selectedColorY);
 								}; break;
 								case INVENTORY_TESPECIAL: {
 									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
@@ -2222,29 +2226,7 @@ int main(void) {
 									break;
 								}; break;
 								case INVENTORY_BUILD_TOOL: {
-									Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
-									Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
-									Vector3 up = Vector3CrossProduct(right, forward);
-									
-									Vector3 boxOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.5f));
-									boxOffset = Vector3Add(boxOffset, Vector3Scale(forward, 1.0f));
-									
-									Vector3 boxPosition = Vector3Add(playerCamera.position,	boxOffset);
-
-									// Orient the box to match the camera
-									Matrix rotation = {
-										right.x, up.x, -forward.x, 0.0f,
-										right.y, up.y, -forward.y, 0.0f,
-										right.z, up.z, -forward.z, 0.0f,
-										0.0f, 0.0f, 0.0f, 1.0f
-									};
-
-									Matrix oldTransform = boxModel.transform;
-									boxModel.transform = MatrixMultiply(oldTransform, rotation);
-									
-									DrawModel(boxModel, boxPosition, BOX_SIZE * 0.5f, colors[selectedColorX][selectedColorY]);
-
-									boxModel.transform = oldTransform;
+									DrawItemBuildTool(playerCamera, boxModel, colors, selectedColorX, selectedColorY);
 								}; break;
 								case INVENTORY_TESPECIAL: {
 									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
