@@ -107,6 +107,8 @@ typedef struct TeSpecial {
 	int roundsLoaded;
 	int extraRounds;
 	float coolDownTimer;
+	int flareFrame;
+	Light flareLight;
 } TeSpecial;
 
 // Save game to save file
@@ -808,6 +810,8 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 
 		teSpecial->coolDownTimer = 0.17f;
 
+		teSpecial->flareFrame = 0;
+
 		// Play sound
 		UpdateItemSounds(teShotPool, playerCamera, 1.0f, 3.0f);
 	}
@@ -841,6 +845,13 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 		teSpecial->coolDownTimer -= GetFrameTime();
 	}
 	else if (teSpecial->coolDownTimer < 0.0f) teSpecial->coolDownTimer = 0.0f;
+
+	// Muzzle flare frames
+	if (teSpecial->flareFrame > -1 && teSpecial->flareFrame <= 2) {
+		++teSpecial->flareFrame;
+		TraceLog(LOG_INFO, "Falre frame: %d", teSpecial->flareFrame);
+	}
+	else teSpecial->flareFrame = -1;
 }
 
 void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Sound walkSound, Sound jumpSound, Sound landSound) {
@@ -1465,6 +1476,16 @@ int main(void) {
 		teSpecialModel.materials[i].shader = basicLightingShader;
 	}
 
+	Model bigMuzzleFlareModel = LoadModel("assets/models/big-muzzle-flare.glb");
+	for (int i = 0; i < bigMuzzleFlareModel.materialCount; i++) {
+		bigMuzzleFlareModel.materials[i].shader = basicLightingShader;
+	}
+
+	Model littleMuzzleFlareModel = LoadModel("assets/models/little-muzzle-flare.glb");
+	for (int i = 0; i < littleMuzzleFlareModel.materialCount; i++) {
+		littleMuzzleFlareModel.materials[i].shader = basicLightingShader;
+	}
+
 
 	// Ambient lighting
 	int ambientLoc = GetShaderLocation(basicLightingShader, "ambient");
@@ -1704,7 +1725,8 @@ int main(void) {
 	player.inventoryIndex = 0;
 
 	// Create player weapons
-	TeSpecial playerTeSpecial = {6, 6, 144, 0.0f};
+	TeSpecial playerTeSpecial = {6, 6, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
+	playerTeSpecial.flareLight.enabled = false;
 	bool showTeSpecialHud = false;
 
 	// Create boxes
@@ -1724,17 +1746,17 @@ int main(void) {
 	Pickup donuts[MAX_DONUTS];
 	int lenDonuts = 6;
 	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 	donuts[4] = (Pickup){ .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 	donuts[5] = (Pickup){ .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.5f, basicLightingShader);
+	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 
 	float gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
@@ -1825,6 +1847,9 @@ int main(void) {
 
 					// Update player
 					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, fxStep, fxJump, fxLand);
+
+					// Update some lights
+					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
 
 					// Update player inventory item
 					float wheel = GetMouseWheelMove();
@@ -2031,7 +2056,7 @@ int main(void) {
 			case GAMEPLAY: {
 				// Construct viewport.
 				BeginTextureMode(viewport);
-					ClearBackground(SKYBLUE);
+					ClearBackground(BLACK);
 
 					BeginMode3D(genericCamera);
 
@@ -2080,7 +2105,7 @@ int main(void) {
 									
 									Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
 
-									// Orient the box to match the camera
+									// Orient the item to match the camera
 									Matrix rotation = {
 										right.x, up.x, -forward.x, 0.0f,
 										right.y, up.y, -forward.y, 0.0f,
@@ -2094,6 +2119,63 @@ int main(void) {
 									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
 
 									teSpecialModel.transform = oldTransform;
+
+									// Draw muzzle flare
+									if (playerTeSpecial.flareFrame == 1) {
+										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+										Vector3 up = Vector3CrossProduct(right, forward);
+
+										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+										
+										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+										// Orient the box to match the camera
+										Matrix rotation = {
+											right.x, up.x, -forward.x, 0.0f,
+											right.y, up.y, -forward.y, 0.0f,
+											right.z, up.z, -forward.z, 0.0f,
+											0.0f, 0.0f, 0.0f, 1.0f
+										};
+
+										Matrix oldTransform = bigMuzzleFlareModel.transform;
+										bigMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+										
+										DrawModel(bigMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+										bigMuzzleFlareModel.transform = oldTransform;
+
+										playerTeSpecial.flareLight.position = itemPosition;
+										playerTeSpecial.flareLight.enabled = true;
+									}
+									else if (playerTeSpecial.flareFrame == 2) {
+										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+										Vector3 up = Vector3CrossProduct(right, forward);
+
+										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+										
+										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+										// Orient the box to match the camera
+										Matrix rotation = {
+											right.x, up.x, -forward.x, 0.0f,
+											right.y, up.y, -forward.y, 0.0f,
+											right.z, up.z, -forward.z, 0.0f,
+											0.0f, 0.0f, 0.0f, 1.0f
+										};
+
+										Matrix oldTransform = littleMuzzleFlareModel.transform;
+										littleMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+										
+										DrawModel(littleMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+										littleMuzzleFlareModel.transform = oldTransform;
+
+									}
+									else playerTeSpecial.flareLight.enabled = false;
 								}; break;
 								default: break;
 							}
@@ -2116,7 +2198,7 @@ int main(void) {
 				EndTextureMode();
 
 				BeginDrawing();
-					ClearBackground(SKYBLUE);
+					ClearBackground(BLACK);
 
 					BeginMode3D(playerCamera);
 
@@ -2182,6 +2264,63 @@ int main(void) {
 									DrawModel(teSpecialModel, itemPosition, 1.0f, WHITE);
 
 									teSpecialModel.transform = oldTransform;
+
+									// Draw muzzle flare
+									if (playerTeSpecial.flareFrame == 1) {
+										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+										Vector3 up = Vector3CrossProduct(right, forward);
+
+										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+										
+										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+										// Orient the box to match the camera
+										Matrix rotation = {
+											right.x, up.x, -forward.x, 0.0f,
+											right.y, up.y, -forward.y, 0.0f,
+											right.z, up.z, -forward.z, 0.0f,
+											0.0f, 0.0f, 0.0f, 1.0f
+										};
+
+										Matrix oldTransform = bigMuzzleFlareModel.transform;
+										bigMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+										
+										DrawModel(bigMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+										bigMuzzleFlareModel.transform = oldTransform;
+
+										playerTeSpecial.flareLight.position = itemPosition;
+										playerTeSpecial.flareLight.enabled = true;
+									}
+									else if (playerTeSpecial.flareFrame == 2) {
+										Vector3 forward = Vector3Normalize(Vector3Subtract(playerCamera.target, playerCamera.position));
+										Vector3 right = Vector3Normalize(Vector3CrossProduct(forward, playerCamera.up));
+										Vector3 up = Vector3CrossProduct(right, forward);
+
+										Vector3 itemOffset = Vector3Add(Vector3Scale(right, 0.5f), Vector3Scale(up, -0.2f));
+										itemOffset = Vector3Add(itemOffset, Vector3Scale(forward, 1.5f));
+										
+										Vector3 itemPosition = Vector3Add(playerCamera.position, itemOffset);
+
+										// Orient the box to match the camera
+										Matrix rotation = {
+											right.x, up.x, -forward.x, 0.0f,
+											right.y, up.y, -forward.y, 0.0f,
+											right.z, up.z, -forward.z, 0.0f,
+											0.0f, 0.0f, 0.0f, 1.0f
+										};
+
+										Matrix oldTransform = littleMuzzleFlareModel.transform;
+										littleMuzzleFlareModel.transform = MatrixMultiply(oldTransform, rotation);
+										
+										DrawModel(littleMuzzleFlareModel, itemPosition, 1.0f, WHITE);
+
+										littleMuzzleFlareModel.transform = oldTransform;
+
+									}
+									else playerTeSpecial.flareLight.enabled = false;
 								}; break;
 								default: break;
 							}
@@ -2237,13 +2376,13 @@ int main(void) {
 							default: break;
 						}
 
-						DrawText(itemText, GetScreenWidth()/2 - MeasureText(itemText, 50)/2, GetScreenHeight()/2 - 150, 50, BLACK);
+						DrawText(itemText, GetScreenWidth()/2 - MeasureText(itemText, 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
 					}
 
 					// .38 Special ammunition
 					if (showTeSpecialHud) {
 						const char* ammoText = TextFormat("%d/%d", playerTeSpecial.roundsLoaded, playerTeSpecial.extraRounds);
-						DrawText(ammoText, GetScreenWidth() - MeasureText(ammoText, 50) - (GetScreenWidth() / 100), GetScreenHeight() - 50, 50, BLACK);
+						DrawText(ammoText, GetScreenWidth() - MeasureText(ammoText, 50) - (GetScreenWidth() / 100), GetScreenHeight() - 50, 50, RAYWHITE);
 					}
 
 					// Game Paused
@@ -2293,6 +2432,8 @@ int main(void) {
 	UnloadModel(boxModel);
 	UnloadModel(donutModel);
 	UnloadModel(teSpecialModel);
+	UnloadModel(littleMuzzleFlareModel);
+	UnloadModel(bigMuzzleFlareModel);
 
 	UnloadRenderTexture(viewport);
 
