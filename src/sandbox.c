@@ -41,6 +41,11 @@ typedef enum InventoryItems {
 	INVENTORY_TESPECIAL = 2
 } InventoryItems;
 
+typedef enum PickupTypes {
+	DONUT = 0,
+	TESPECIAL_AMMO = 1
+} PickupTypes;
+
 typedef struct SoundPool {
 	Sound sounds[MAX_SOUND_POOL_SIZE];
 	int owner[MAX_SOUND_POOL_SIZE];
@@ -90,6 +95,7 @@ typedef struct Box {
 } Box;
 
 typedef struct Pickup {
+	int type;
 	Vector3 position;
 	Vector3 size;
 	Model model;
@@ -100,12 +106,17 @@ typedef struct Pickup {
 	float bounceTime;
 	float bounceDuration;
 	Light light;
+	bool canRespawn;
+	float respawnTime;
+	float respawnTimer;
+	bool enabled;
 } Pickup;
 
 typedef struct TeSpecial {
 	const int loadCapacity;
 	int roundsLoaded;
 	int extraRounds;
+	const int extraRoundsCapacity;
 	float coolDownTimer;
 	int flareFrame;
 	Light flareLight;
@@ -854,7 +865,7 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 	else teSpecial->flareFrame = -1;
 }
 
-void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Sound walkSound, Sound jumpSound, Sound landSound) {
+void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Pickup pickups[], int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, Shader lightShader) {
 	float delta = GetFrameTime();
 
 	character->delta.x = 0.0f;
@@ -1011,6 +1022,35 @@ void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitiv
 		if (character->velocity.y < 0.0f) character->velocity.y = 0.0f;
 	}
 
+	// Collisions with pickups
+	for (int i = 0; i < lenPickups; i++) {
+		if (CheckCollisionBoxes((BoundingBox){(Vector3){ character->position.x - character->size.x / 2, character->position.y - character->size.y / 2, character->position.z - character->size.z / 2 }, (Vector3){ character->position.x + character->size.x / 2, character->position.y + character->size.y / 2, character->position.z + character->size.z / 2 }}, (BoundingBox){(Vector3){ pickups[i].position.x - pickups[i].size.x / 2, pickups[i].position.y - pickups[i].size.y / 2, pickups[i].position.z - pickups[i].size.z / 2 }, (Vector3){ pickups[i].position.x + pickups[i].size.x / 2, pickups[i].position.y + pickups[i].size.y / 2, pickups[i].position.z + pickups[i].size.z / 2 }}) && pickups[i].enabled) {
+			TraceLog(LOG_INFO, "Colliding with pickup: %d", i);
+
+			switch (pickups[i].type) {
+				case DONUT: {
+					break;
+				} break;
+
+				case TESPECIAL_AMMO: {
+					if (teSpecial->extraRounds != teSpecial->extraRoundsCapacity) {
+						// Give player ammo
+						if (teSpecial->extraRounds + 24 < teSpecial->extraRoundsCapacity) teSpecial->extraRounds += 24;
+						else teSpecial->extraRounds = teSpecial->extraRoundsCapacity;
+
+						// Disable or delete pickup
+						// We disable if canRespawn, otherwise, we delete
+						pickups[i].enabled = false;
+						pickups[i].light.enabled = false;
+						UpdateLightValues(lightShader, pickups[i].light);
+					}
+				} break;
+
+				default: break;
+			}
+		}
+	}
+
 	// Walking sounds
 	float horizontalSpeed = sqrtf(character->velocity.x * character->velocity.x + character->velocity.z * character->velocity.z);
 	
@@ -1141,41 +1181,51 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 
 void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool, Shader lightShader) {
 	for (int o = 0; o < lenPickups; o++) {
-		// Calculate angle
-		pickups[o].spin += pickups[o].spinSpeed;
-		if (pickups[o].spin > 360.0f) pickups[o].spin = 0.0f;
-	
-		// Calculate bounce position
-		pickups[o].bounceTime += GetFrameTime();
-	
-		float t = pickups[o].bounceTime / pickups[o].bounceDuration;
-	
-		if (t >= 1.0f) t = 1.0f;	
-	
-		// Ease in/out
-		float eased = (1.0f - cosf(t * PI)) * 0.5f;
-	
-		float startY;
-		float endY;
-	
-		if (pickups[o].bounceUp) {
-			startY = pickups[o].targetY - 0.1f;
-			endY = pickups[o].targetY + 0.1f;
-		}
-		else {
-			startY = pickups[o].targetY + 0.1f;
-			endY = pickups[o].targetY - 0.1f;
-		}
-	
-		pickups[o].position.y = startY + (endY - startY) * eased;
-	
-		if (pickups[o].bounceTime >= pickups[o].bounceDuration) {
-			pickups[o].bounceTime = 0.0f;
-			pickups[o].bounceUp = !pickups[o].bounceUp;
-		}
+		if (pickups[o].enabled) {
+			// Calculate angle
+			pickups[o].spin += pickups[o].spinSpeed;
+			if (pickups[o].spin > 360.0f) pickups[o].spin = 0.0f;
+		
+			// Calculate bounce position
+			pickups[o].bounceTime += GetFrameTime();
+		
+			float t = pickups[o].bounceTime / pickups[o].bounceDuration;
+		
+			if (t >= 1.0f) t = 1.0f;	
+		
+			// Ease in/out
+			float eased = (1.0f - cosf(t * PI)) * 0.5f;
+		
+			float startY;
+			float endY;
+		
+			if (pickups[o].bounceUp) {
+				startY = pickups[o].targetY - 0.1f;
+				endY = pickups[o].targetY + 0.1f;
+			}
+			else {
+				startY = pickups[o].targetY + 0.1f;
+				endY = pickups[o].targetY - 0.1f;
+			}
+		
+			pickups[o].position.y = startY + (endY - startY) * eased;
+		
+			if (pickups[o].bounceTime >= pickups[o].bounceDuration) {
+				pickups[o].bounceTime = 0.0f;
+				pickups[o].bounceUp = !pickups[o].bounceUp;
+			}
 
-		// Update lights
-		UpdateLightValues(lightShader, pickups[o].light);
+			// Update lights
+			UpdateLightValues(lightShader, pickups[o].light);
+		} else if (pickups[o].canRespawn) {
+			pickups[o].respawnTimer += GetFrameTime();
+
+			if (pickups[o].respawnTimer >= pickups[o].respawnTime) {
+				pickups[o].enabled = true;
+				pickups[o].light.enabled = true;
+				pickups[o].respawnTimer = 0.0f;
+			}
+		}
 	}
 
 	// Play idle sounds
@@ -1184,8 +1234,10 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 
 void DrawPickups(Pickup pickups[], int lenPickups) {
 	for (int o = 0; o < lenPickups; o++) {
-		DrawModelEx(pickups[o].model, pickups[o].position, (Vector3){ 0.0f, 1.0f, 0.0f }, pickups[o].spin, (Vector3){ 1.8f, 1.8f, 1.8f }, WHITE);
-		//DrawCubeWires(pickups[o].position, pickups[o].size.x, pickups[o].size.y, pickups[o].size.z, GREEN);
+		if (pickups[o].enabled) {
+			DrawModelEx(pickups[o].model, pickups[o].position, (Vector3){ 0.0f, 1.0f, 0.0f }, pickups[o].spin, (Vector3){ 1.8f, 1.8f, 1.8f }, WHITE);
+			//DrawCubeWires(pickups[o].position, pickups[o].size.x, pickups[o].size.y, pickups[o].size.z, GREEN);
+		}
 	}
 }
 
@@ -1582,6 +1634,13 @@ int main(void) {
 	}
 	donutModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
 
+	Model teAmmoModel = LoadModel("assets/models/38-ammo.glb");
+	// Use basic lighting shader for model's material shader
+	for (int i = 0; i < teAmmoModel.materialCount; i++) {
+		teAmmoModel.materials[i].shader = basicLightingShader;
+	}
+	teAmmoModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
+
 	Model teSpecialModel = LoadModel("assets/models/38-special.glb");
 	for (int i = 0; i < teSpecialModel.materialCount; i++) {
 		teSpecialModel.materials[i].shader = basicLightingShader;
@@ -1836,7 +1895,7 @@ int main(void) {
 	player.inventoryIndex = 0;
 
 	// Create player weapons
-	TeSpecial playerTeSpecial = {6, 6, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
+	TeSpecial playerTeSpecial = {6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
 	playerTeSpecial.flareLight.enabled = false;
 	bool showTeSpecialHud = false;
 
@@ -1854,20 +1913,20 @@ int main(void) {
 	boxes[6] = (Box){(Vector3){ -3.0f, 0.5f * 4.0f, 5.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, RED, 100.0f};
 
 	// Create pickups
-	Pickup donuts[MAX_DONUTS];
-	int lenDonuts = 6;
-	donuts[0] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[0].light = CreateLight(LIGHT_POINT, donuts[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	donuts[1] = (Pickup){ .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[1].light = CreateLight(LIGHT_POINT, donuts[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	donuts[2] = (Pickup){ .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[2].light = CreateLight(LIGHT_POINT, donuts[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	donuts[3] = (Pickup){ .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[3].light = CreateLight(LIGHT_POINT, donuts[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	donuts[4] = (Pickup){ .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[4].light = CreateLight(LIGHT_POINT, donuts[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	donuts[5] = (Pickup){ .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	donuts[5].light = CreateLight(LIGHT_POINT, donuts[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	Pickup pickups[MAX_DONUTS];
+	int lenPickups = 6;
+	pickups[0] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[0].light = CreateLight(LIGHT_POINT, pickups[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	pickups[1] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[1].light = CreateLight(LIGHT_POINT, pickups[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	pickups[2] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[2].light = CreateLight(LIGHT_POINT, pickups[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	pickups[3] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[3].light = CreateLight(LIGHT_POINT, pickups[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	pickups[4] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[4].light = CreateLight(LIGHT_POINT, pickups[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	pickups[5] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	pickups[5].light = CreateLight(LIGHT_POINT, pickups[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 
 	float gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
@@ -1961,7 +2020,7 @@ int main(void) {
 					}
 
 					// Update player
-					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, fxStep, fxJump, fxLand);
+					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, basicLightingShader);
 
 					// Update some lights
 					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
@@ -2018,7 +2077,7 @@ int main(void) {
 					}
 
 					// Update pickups
-					UpdatePickups(donuts, lenDonuts, playerCamera, &pickupPulsePool, basicLightingShader);
+					UpdatePickups(pickups, lenPickups, playerCamera, &pickupPulsePool, basicLightingShader);
 				}
 
 				// Game Paused
@@ -2198,7 +2257,7 @@ int main(void) {
 							DrawBoxes(boxes, lenBoxes);
 
 							// Draw pickups
-							DrawPickups(donuts, lenDonuts);
+							DrawPickups(pickups, lenPickups);
 
 						EndShaderMode();
 
@@ -2222,7 +2281,7 @@ int main(void) {
 							DrawBoxes(boxes, lenBoxes);
 	
 							// Draw pickups
-							DrawPickups(donuts, lenDonuts);
+							DrawPickups(pickups, lenPickups);
 
 							// Draw player inventory item
 							switch (player.inventoryIndex) {
@@ -2347,6 +2406,7 @@ int main(void) {
 	UnloadModel(teSpecialModel);
 	UnloadModel(littleMuzzleFlareModel);
 	UnloadModel(bigMuzzleFlareModel);
+	UnloadModel(teAmmoModel);
 
 	UnloadRenderTexture(viewport);
 
