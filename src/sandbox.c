@@ -1631,7 +1631,6 @@ int main(void) {
 	for (int i = 0; i < teAmmoModel.materialCount; i++) {
 		teAmmoModel.materials[i].shader = basicLightingShader;
 	}
-	teAmmoModel.transform = MatrixRotateXYZ((Vector3){ 0.0f, 0.0f, 45.0f });
 
 	Model teSpecialModel = LoadModel("assets/models/38-special.glb");
 	for (int i = 0; i < teSpecialModel.materialCount; i++) {
