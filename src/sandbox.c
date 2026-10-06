@@ -23,7 +23,7 @@ There is also a makefile.
 #define MAX_BOX_PLACE_DISTANCE 3.0f
 #define MAX_BOX_DELETE_DISTANCE 3.0f
 #define COLLISION_EPSILON 0.0001f
-#define MAX_DONUTS 100
+#define MAX_PICKUPS 100
 #define MAX_SOUND_POOL_SIZE 4
 #define NUM_INVENTORY_ITEMS 3
 
@@ -1995,7 +1995,7 @@ int main(void) {
 	boxes[6] = (Box){(Vector3){ -3.0f, 0.5f * 4.0f, 5.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, RED, 100.0f};
 
 	// Create pickups
-	Pickup pickups[MAX_DONUTS];
+	Pickup pickups[MAX_PICKUPS];
 	int lenPickups = 6;
 	pickups[0] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
 	pickups[0].light = CreateLight(LIGHT_POINT, pickups[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
