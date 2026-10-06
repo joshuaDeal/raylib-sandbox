@@ -1531,6 +1531,7 @@ FilePathList LoadSaveFiles(void) {
 	return saveFiles;
 }
 
+// TODO: Look deeper into raylib sound functionality. See LoadSoundAlias().
 SoundPool createSoundPool(char *sound) {
 	SoundPool soundPool = { .length = MAX_SOUND_POOL_SIZE };
 	for (int i = 0; i < soundPool.length; i++) {
