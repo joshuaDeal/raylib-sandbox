@@ -1150,6 +1150,9 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 			// Don't consider pickups that already have a sound.
 			if (alreadyHasSound) continue;
 
+			// Don't consider pickups that are not enabled.
+			if (!pickups[p].enabled) continue;
+
 			// Calculate distance from the listener. We only care about distance here because this is being used to decide which pickup gets a scarce sound-pool slot.
 			Vector3 direction = Vector3Subtract( pickups[p].position, listener.position);
 			float distance = Vector3Length(direction);
@@ -1224,6 +1227,18 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 				pickups[o].enabled = true;
 				pickups[o].light.enabled = true;
 				pickups[o].respawnTimer = 0.0f;
+			}
+		}
+
+		if (!pickups[o].enabled) {
+			// Find out if disabled pickup has a sound pool sound assigned.
+			for (int i = 0; i < soundPool->length; i++) {
+				if (soundPool->owner[i] == o) {
+					// If that sound is playing, stop it.
+					if (IsSoundPlaying(soundPool->sounds[i])) {
+						StopSound(soundPool->sounds[i]);
+					}
+				}
 			}
 		}
 	}
