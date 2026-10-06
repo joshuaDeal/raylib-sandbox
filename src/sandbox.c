@@ -1608,6 +1608,12 @@ SoundPool createSoundPool(char *sound) {
 	return soundPool;
 }
 
+void UnloadSoundPool(SoundPool soundPool) {
+	for (int i = 0; i < soundPool.length; i++) {
+		UnloadSound(soundPool.sounds[i]);
+	}
+}
+
 int main(void) {
 	// Initialization
 	const int screenWidth = 800;
@@ -2429,21 +2435,10 @@ int main(void) {
 	UnloadSound(fxUIClick);
 	UnloadSound(fxChangeColor);
 
-	for (int i = 0; i < pickupPulsePool.length; i++) {
-		UnloadSound(pickupPulsePool.sounds[i]);
-	}
-
-	for (int i = 0; i < teShotPool.length; i++) {
-		UnloadSound(teShotPool.sounds[i]);
-	}
-
-	for (int i = 0; i < reloadPool.length; i++) {
-		UnloadSound(reloadPool.sounds[i]);
-	}
-
-	for (int i = 0; i < triggerPullPool.length; i++) {
-		UnloadSound(triggerPullPool.sounds[i]);
-	}
+	UnloadSoundPool(pickupPulsePool);
+	UnloadSoundPool(teShotPool);
+	UnloadSoundPool(reloadPool);
+	UnloadSoundPool(triggerPullPool);
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
 		free(fileButtons[i].buttonText);
