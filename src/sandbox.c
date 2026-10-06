@@ -443,6 +443,25 @@ void DrawFloor(int slicesX, int slicesZ, float spacing, float xMin, float zMin) 
 	}
 }
 
+void DrawColorPicker(int colorsPerCol, int colorsPerRow, int selectedColorX, int selectedColorY, Color colors[][8]) {
+	int colorBoxSize = GetScreenWidth() / 50;
+	int colorBoxSpacing = GetScreenWidth() / 400;
+	int startingX = GetScreenWidth() - ((colorBoxSize + colorBoxSpacing)* colorsPerCol);
+	int startingY = GetScreenHeight() - ((colorBoxSize + colorBoxSpacing)* colorsPerRow);
+	int indicatorThickness = colorBoxSize / 10;
+	for (int i = 0; i < colorsPerCol; i++) {
+		for (int j = 0; j < colorsPerRow; j++) {
+			// Draw selected indicator
+			if (selectedColorX == i && selectedColorY == j) {
+				DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, startingY + (j * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, colorBoxSize + (indicatorThickness * 2), colorBoxSize + (indicatorThickness * 2), WHITE);
+			}
+
+			// Draw color box
+			DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)), startingY + (j * (colorBoxSize + colorBoxSpacing)), colorBoxSize, colorBoxSize, colors[i][j]);
+		}
+	}
+}
+
 void UpdatePositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance, float boost) {
 	// Calculate direction and distance
 	Vector3 direction = Vector3Subtract(position, listener.position);
@@ -2332,22 +2351,7 @@ int main(void) {
 
 					// Color picker
 					if (showColorPicker) {
-						int colorBoxSize = GetScreenWidth() / 50;
-						int colorBoxSpacing = GetScreenWidth() / 400;
-						int startingX = GetScreenWidth() - ((colorBoxSize + colorBoxSpacing)* colorsPerCol);
-						int startingY = GetScreenHeight() - ((colorBoxSize + colorBoxSpacing)* colorsPerRow);
-						int indicatorThickness = colorBoxSize / 10;
-						for (int i = 0; i < colorsPerCol; i++) {
-							for (int j = 0; j < colorsPerRow; j++) {
-								// Draw selected indicator
-								if (selectedColorX == i && selectedColorY == j) {
-									DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, startingY + (j * (colorBoxSize + colorBoxSpacing)) - indicatorThickness, colorBoxSize + (indicatorThickness * 2), colorBoxSize + (indicatorThickness * 2), WHITE);
-								}
-
-								// Draw color box
-								DrawRectangle(startingX + (i * (colorBoxSize + colorBoxSpacing)), startingY + (j * (colorBoxSize + colorBoxSpacing)), colorBoxSize, colorBoxSize, colors[i][j]);
-							}
-						}
+						DrawColorPicker(colorsPerCol, colorsPerRow, selectedColorX, selectedColorY, colors);
 					}
 
 					// Inventory
