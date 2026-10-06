@@ -1531,6 +1531,16 @@ FilePathList LoadSaveFiles(void) {
 	return saveFiles;
 }
 
+SoundPool createSoundPool(char *sound) {
+	SoundPool soundPool = { .length = MAX_SOUND_POOL_SIZE };
+	for (int i = 0; i < soundPool.length; i++) {
+		soundPool.sounds[i] = LoadSound(sound);
+		soundPool.owner[i] = -1;
+	}
+
+	return soundPool;
+}
+
 int main(void) {
 	// Initialization
 	const int screenWidth = 800;
@@ -1602,29 +1612,10 @@ int main(void) {
 	Sound fxChangeColor = LoadSound("assets/audio/switch.ogg");
 
 	// Sound pools
-	SoundPool pickupPulsePool = { .length = MAX_SOUND_POOL_SIZE };
-	for (int i = 0; i < pickupPulsePool.length; i++) {
-		pickupPulsePool.sounds[i] = LoadSound("assets/audio/low-synth-pulse.ogg");
-		pickupPulsePool.owner[i] = -1;
-	}
-
-	SoundPool teShotPool = { .length = MAX_SOUND_POOL_SIZE };
-	for (int i = 0; i < teShotPool.length; i++) {
-		teShotPool.sounds[i] = LoadSound("assets/audio/38-shot.ogg");
-		teShotPool.owner[i] = -1;
-	}
-
-	SoundPool reloadPool = { .length = MAX_SOUND_POOL_SIZE };
-	for (int i = 0; i < reloadPool.length; i++) {
-		reloadPool.sounds[i] = LoadSound("assets/audio/reload.ogg");
-		reloadPool.owner[i] = -1;
-	}
-
-	SoundPool triggerPullPool = { .length = MAX_SOUND_POOL_SIZE };
-	for (int i = 0; i < triggerPullPool.length; i++) {
-		triggerPullPool.sounds[i] = LoadSound("assets/audio/trigger-pull.ogg");
-		triggerPullPool.owner[i] = -1;
-	}
+	SoundPool pickupPulsePool = createSoundPool("assets/audio/low-synth-pulse.ogg");
+	SoundPool teShotPool = createSoundPool("assets/audio/38-shot.ogg");
+	SoundPool reloadPool = createSoundPool("assets/audio/reload.ogg");
+	SoundPool triggerPullPool = createSoundPool("assets/audio/trigger-pull.ogg");
 
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
