@@ -865,7 +865,58 @@ void UpdateItemTeSpecial(TeSpecial *teSpecial, Box boxes[], int *lenBoxes, Ray *
 	else teSpecial->flareFrame = -1;
 }
 
-void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Pickup pickups[], int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, bool *showInventory, float * showInventoryTimer, Shader lightShader) {
+void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud) {
+	// Update character inventory position 
+	float wheel = GetMouseWheelMove();
+	if (wheel > 0) {
+		if (character->inventoryIndex < NUM_INVENTORY_ITEMS - 1) {
+			character->inventoryIndex++;
+			*showInventory = true;
+			*showInventoryTimer = 0.0f;
+		} else {
+			character->inventoryIndex = 0;
+			*showInventory = true;
+			*showInventoryTimer = 0.0f;
+		}
+	}
+	else if (wheel < 0) {
+		if (character->inventoryIndex > 0) {
+			character->inventoryIndex--;
+			*showInventory = true;
+			*showInventoryTimer = 0.0f;
+		} else {
+			character->inventoryIndex = NUM_INVENTORY_ITEMS -1;
+			*showInventory = true;
+			*showInventoryTimer = 0.0f;
+		}
+	}
+
+	// Update inventory item.
+	if (character->inventoryIndex == INVENTORY_BUILD_TOOL && character->inventory[character->inventoryIndex]) {
+		UpdateItemBuildTool(boxes, lenBoxes, boxClickRay, boxClickCollision, boxSelectedColorX, boxSelectedColorY, showColorPicker, colorPickerTimer, colors, colorsPerRow, colorsPerCol, characterCamera, *character, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor);
+	} else if (*colorPickerTimer != 0.0f) {
+		*colorPickerTimer = 0.0f;
+		*showColorPicker = false;
+	}
+
+	if (character->inventoryIndex == INVENTORY_TESPECIAL && character->inventory[character->inventoryIndex]) {
+		UpdateItemTeSpecial(characterTeSpecial, boxes, lenBoxes, boxClickRay, boxClickCollision, characterCamera, fxBreakBox, fxHitBox, teShotPool, reloadPool, triggerPullPool);
+		*showTeSpecialHud = true;
+	} else {
+		*showTeSpecialHud = false;
+	}
+
+	if (*showInventory == true) {
+		if (*showInventoryTimer <= 3.0f) {
+			*showInventoryTimer += GetFrameTime();
+		} else {
+			*showInventory = false;
+		}
+	}
+}
+
+// TODO: Consider splitting this up into smaller functions. It's a lot.
+void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Pickup pickups[], int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, Shader lightShader) {
 	float delta = GetFrameTime();
 
 	character->delta.x = 0.0f;
@@ -937,34 +988,6 @@ void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitiv
 	if (character->onGround && character->landFlag) {
 		PlayPositionalSound(landSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f, 1.0f);
 		character->landFlag = false;
-	}
-
-
-	// Update character inventory item
-	if (character->isHuman) {
-		float wheel = GetMouseWheelMove();
-		if (wheel > 0) {
-			if (character->inventoryIndex < NUM_INVENTORY_ITEMS - 1) {
-				character->inventoryIndex++;
-				*showInventory = true;
-				*showInventoryTimer = 0.0f;
-			} else {
-				character->inventoryIndex = 0;
-				*showInventory = true;
-				*showInventoryTimer = 0.0f;
-			}
-		}
-		else if (wheel < 0) {
-			if (character->inventoryIndex > 0) {
-				character->inventoryIndex--;
-				*showInventory = true;
-				*showInventoryTimer = 0.0f;
-			} else {
-				character->inventoryIndex = NUM_INVENTORY_ITEMS -1;
-				*showInventory = true;
-				*showInventoryTimer = 0.0f;
-			}
-		}
 	}
 
 	// Move x
@@ -2054,32 +2077,11 @@ int main(void) {
 					}
 
 					// Update player
-					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &showInventory, &showInventoryTimer, basicLightingShader);
+					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, basicLightingShader);
+					UpdateCharacterInventory(&player, &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
 
 					// Update some lights
 					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
-
-					if (player.inventoryIndex == INVENTORY_BUILD_TOOL && player.inventory[player.inventoryIndex]) {
-						UpdateItemBuildTool(boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorX, &selectedColorY, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, player, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor);
-					} else if (colorPickerTimer != 0.0f) {
-						colorPickerTimer = 0.0f;
-						showColorPicker = false;
-					}
-
-					if (player.inventoryIndex == INVENTORY_TESPECIAL && player.inventory[player.inventoryIndex]) {
-						UpdateItemTeSpecial(&playerTeSpecial, boxes, &lenBoxes, &boxClickRay, boxClickCollision, playerCamera, fxBreakBox, fxHitBox, &teShotPool, &reloadPool, &triggerPullPool);
-						showTeSpecialHud = true;
-					} else {
-						showTeSpecialHud = false;
-					}
-
-					if (showInventory == true) {
-						if (showInventoryTimer <= 3.0f) {
-							showInventoryTimer += GetFrameTime();
-						} else {
-							showInventory = false;
-						}
-					}
 
 					// Update pickups
 					UpdatePickups(pickups, lenPickups, playerCamera, &pickupPulsePool, basicLightingShader);
