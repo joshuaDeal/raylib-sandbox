@@ -91,7 +91,7 @@ void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPicku
 	}
 }
 
-void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool, Shader lightShader) {
+void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *idleSoundPool, SoundPool *respawnSoundPool, Shader lightShader) {
 	for (int o = 0; o < lenPickups; o++) {
 		if (pickups[o].enabled) {
 			// Calculate angle
@@ -136,16 +136,19 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 				pickups[o].enabled = true;
 				pickups[o].light.enabled = true;
 				pickups[o].respawnTimer = 0.0f;
+
+				// Play sound
+				PlayPositionalSoundPoolSounds(respawnSoundPool, listener, pickups[o].position, 0.1f, 1.0f);
 			}
 		}
 
 		if (!pickups[o].enabled) {
 			// Find out if disabled pickup has a sound pool sound assigned.
-			for (int i = 0; i < soundPool->length; i++) {
-				if (soundPool->owner[i] == o) {
+			for (int i = 0; i < idleSoundPool->length; i++) {
+				if (idleSoundPool->owner[i] == o) {
 					// If that sound is playing, stop it.
-					if (IsSoundPlaying(soundPool->sounds[i])) {
-						StopSound(soundPool->sounds[i]);
+					if (IsSoundPlaying(idleSoundPool->sounds[i])) {
+						StopSound(idleSoundPool->sounds[i]);
 					}
 				}
 			}
@@ -153,7 +156,7 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 	}
 
 	// Play idle sounds
-	UpdatePickupIdleSounds(soundPool, pickups, lenPickups, listener);
+	UpdatePickupIdleSounds(idleSoundPool, pickups, lenPickups, listener);
 }
 
 void DrawPickups(Pickup pickups[], int lenPickups) {

@@ -32,6 +32,47 @@ void PlayPositionalSound(Sound sound, Camera listener, Vector3 position, float m
 	PlaySound(sound);
 }
 
+void PlayPositionalSoundPoolSounds(SoundPool *soundPool, Camera listener, Vector3 position, float maxDistance, float boost) {
+	// Release pool slots whose sounds have finished playing.
+	for (int i = 0; i < soundPool->length; i++) {
+
+		// Nothing is using this slot.
+		if (soundPool->owner[i] == -1) continue;
+
+		// The sound has finished, so the pool slot is available again.
+		if (!IsSoundPlaying(soundPool->sounds[i])) {
+			soundPool->owner[i] = -1;
+		}
+	}
+
+	// Update the position/volume/panning of sounds that are currently assigned.
+	for (int i = 0; i < soundPool->length; i++) {
+		int soundIndex = soundPool->owner[i];
+
+		// This sound is currently unused.
+		if (soundIndex == -1) continue;
+
+		UpdatePositionalSound(soundPool->sounds[i], listener, position, maxDistance, boost);
+	}
+
+	// Default to index 0.
+	int freeSoundIndex = 0;
+
+	// Find an unused sound in the pool.
+	for (int i = 0; i < soundPool->length; i++) {
+		if (soundPool->owner[i] == -1) {
+			freeSoundIndex = i;
+		}
+	}
+
+	// Set its initial positional properties before playing.
+	UpdatePositionalSound(soundPool->sounds[freeSoundIndex], listener, position, maxDistance, boost);
+
+	soundPool->owner[freeSoundIndex] = 0;
+
+	PlaySound(soundPool->sounds[freeSoundIndex]);
+}
+
 void UpdateItemSounds(SoundPool *soundPool, Camera listener, float maxDistance, float boost) {
 	// Get position of item
 	Vector3 forward = Vector3Normalize(Vector3Subtract(listener.target, listener.position));

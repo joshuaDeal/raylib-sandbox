@@ -32,7 +32,7 @@ typedef struct Pickup {
 
 void UpdatePickupIdleSounds(SoundPool *soundPool, Pickup pickups[], int lenPickups, Camera listener);
 
-void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *soundPool, Shader lightShader);
+void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool *idleSoundPool, SoundPool *respawnSoundPool, Shader lightShader);
 
 void DrawPickups(Pickup pickups[], int lenPickups);
 

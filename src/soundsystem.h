@@ -15,6 +15,8 @@ void UpdatePositionalSound(Sound sound, Camera listener, Vector3 position, float
 
 void PlayPositionalSound(Sound sound, Camera listener, Vector3 position, float maxDistance, float boost);
 
+void PlayPositionalSoundPoolSounds(SoundPool *soundPool, Camera listener, Vector3 position, float maxDistance, float boost);
+
 void UpdateItemSounds(SoundPool *soundPool, Camera listener, float maxDistance, float boost);
 
 SoundPool createSoundPool(char *sound);

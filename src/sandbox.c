@@ -122,6 +122,7 @@ int main(void) {
 	SoundPool reloadPool = createSoundPool("assets/audio/reload.ogg");
 	SoundPool triggerPullPool = createSoundPool("assets/audio/trigger-pull.ogg");
 	SoundPool getAmmoPool = createSoundPool("assets/audio/ammo.ogg");
+	SoundPool pickupRespawnPool = createSoundPool("assets/audio/item-respawn.ogg");
 
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
@@ -523,7 +524,7 @@ int main(void) {
 					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
 
 					// Update pickups
-					UpdatePickups(pickups, lenPickups, playerCamera, &pickupPulsePool, basicLightingShader);
+					UpdatePickups(pickups, lenPickups, playerCamera, &pickupPulsePool, &pickupRespawnPool, basicLightingShader);
 				}
 
 				// Game Paused
@@ -858,6 +859,7 @@ int main(void) {
 	UnloadSoundPool(reloadPool);
 	UnloadSoundPool(triggerPullPool);
 	UnloadSoundPool(getAmmoPool);
+	UnloadSoundPool(pickupRespawnPool);
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
 		free(fileButtons[i].buttonText);
