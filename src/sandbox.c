@@ -121,6 +121,7 @@ int main(void) {
 	SoundPool teShotPool = createSoundPool("assets/audio/38-shot.ogg");
 	SoundPool reloadPool = createSoundPool("assets/audio/reload.ogg");
 	SoundPool triggerPullPool = createSoundPool("assets/audio/trigger-pull.ogg");
+	SoundPool getAmmoPool = createSoundPool("assets/audio/ammo.ogg");
 
 	// Models
 	Model donutModel = LoadModel("assets/models/donut.glb");
@@ -515,7 +516,7 @@ int main(void) {
 					}
 
 					// Update player
-					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, basicLightingShader);
+					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
 					UpdateCharacterInventory(&player, &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
 
 					// Update some lights
@@ -856,6 +857,7 @@ int main(void) {
 	UnloadSoundPool(teShotPool);
 	UnloadSoundPool(reloadPool);
 	UnloadSoundPool(triggerPullPool);
+	UnloadSoundPool(getAmmoPool);
 
 	for (int i = 0; i < (int)saveFiles.count; i++) {
 		free(fileButtons[i].buttonText);

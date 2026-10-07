@@ -55,7 +55,7 @@ void UpdateCharacterInventory(Character *character, bool *showInventory, float *
 }
 
 // TODO: Consider splitting this up into smaller functions. It's a lot.
-void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Pickup pickups[], int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, Shader lightShader) {
+void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box objects[], int lenObjects, Pickup pickups[], int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader) {
 	float delta = GetFrameTime();
 
 	character->delta.x = 0.0f;
@@ -233,6 +233,9 @@ void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitiv
 						pickups[i].enabled = false;
 						pickups[i].light.enabled = false;
 						UpdateLightValues(lightShader, pickups[i].light);
+
+						// Play sound
+						UpdateItemSounds(getAmmoPool, *camera, 1.0f, 1.0f);
 					}
 				} break;
 
