@@ -138,7 +138,7 @@ void UpdatePickups(Pickup pickups[], int lenPickups, Camera listener, SoundPool 
 				pickups[o].respawnTimer = 0.0f;
 
 				// Play sound
-				PlayPositionalSoundPoolSounds(respawnSoundPool, listener, pickups[o].position, 0.1f, 1.0f);
+				PlayPositionalSoundPoolSounds(respawnSoundPool, listener, pickups[o].position, 0.2f, 1.0f);
 			}
 		}
 
