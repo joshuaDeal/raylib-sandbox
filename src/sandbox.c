@@ -23,6 +23,7 @@ You can also try a gcc command like this:
 #include "tespecial.h"
 #include "buildtool.h"
 #include "pickup.h"
+#include "platform.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -399,15 +400,23 @@ int main(void) {
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
 	for (int i = 0; i < boxModel.materialCount; i++) boxModel.materials[i].shader = basicLightingShader;
-	int lenBoxes = 7;
+	int lenBoxes = 1;
 	Box boxes[MAX_BOXES];
-	boxes[0] = (Box){(Vector3){ -1.0f, 0.5f, -4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, BLUE, 100.0f};
-	boxes[1] = (Box){(Vector3){ 1.0f, 0.5f, -2.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, PURPLE, 100.0f};
-	boxes[2] = (Box){(Vector3){ -1.0f, 0.5f * 3.0f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, ORANGE, 100.0f};
-	boxes[3] = (Box){(Vector3){ 1.0f, 0.5f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, GREEN, 100.0f};
-	boxes[4] = (Box){(Vector3){ -3.0f, 0.5f * 4.0f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, PINK, 100.0f};
-	boxes[5] = (Box){(Vector3){ -3.0f, 0.5f * 4.0f, 3.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, BROWN, 100.0f};
-	boxes[6] = (Box){(Vector3){ -3.0f, 0.5f * 4.0f, 5.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, RED, 100.0f};
+	boxes[0] = (Box){(Vector3){ 1.0f, 0.5f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, ORANGE, 100.0f};
+
+	// Create platforms
+	int lenPlatforms = 5;
+	Platform platforms[MAX_PLATFORMS];
+	platforms[0] = (Platform){ .position = (Vector3){ 0.0f, -0.25f, 0.0f }, .size = (Vector3){ 20.0f, 0.5f, 20.0f }, .color = GREEN, .solid = true };
+	platforms[0].model = CreatePlatformModel(platforms[0].size, basicLightingShader);
+	platforms[1] = (Platform){ .position = (Vector3){ 10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
+	platforms[1].model = CreatePlatformModel(platforms[1].size, basicLightingShader);
+	platforms[2] = (Platform){ .position = (Vector3){ -10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
+	platforms[2].model = CreatePlatformModel(platforms[2].size, basicLightingShader);
+	platforms[3] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, 10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
+	platforms[3].model = CreatePlatformModel(platforms[3].size, basicLightingShader);
+	platforms[4] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, -10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
+	platforms[4].model = CreatePlatformModel(platforms[4].size, basicLightingShader);
 
 	// Create pickups
 	Pickup pickups[MAX_PICKUPS];
@@ -517,7 +526,7 @@ int main(void) {
 					}
 
 					// Update player
-					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
+					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, platforms, lenPlatforms, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
 					UpdateCharacterInventory(&player, &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
 
 					// Update some lights
@@ -703,6 +712,9 @@ int main(void) {
 							// Draw boxes
 							DrawBoxes(boxes, lenBoxes);
 
+							// Draw platforms
+							DrawPlatforms(platforms, lenPlatforms);
+
 							// Draw pickups
 							DrawPickups(pickups, lenPickups);
 
@@ -726,6 +738,9 @@ int main(void) {
 	
 							// Draw boxes
 							DrawBoxes(boxes, lenBoxes);
+
+							// Draw platforms
+							DrawPlatforms(platforms, lenPlatforms);
 	
 							// Draw pickups
 							DrawPickups(pickups, lenPickups);
@@ -747,7 +762,7 @@ int main(void) {
 						EndShaderMode();
 
 						// Draw floor 
-						DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
+						//DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
 
 						// Draw boxClickRay
 						DrawRay(boxClickRay, RED);
@@ -839,6 +854,8 @@ int main(void) {
 	UnloadModel(littleMuzzleFlareModel);
 	UnloadModel(bigMuzzleFlareModel);
 	UnloadModel(teAmmoModel);
+
+	for (int i = 0; i < lenPlatforms; i++) UnloadModel(platforms[i].model);
 
 	UnloadRenderTexture(viewport);
 

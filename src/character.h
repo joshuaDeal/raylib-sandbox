@@ -11,6 +11,7 @@
 typedef struct Box Box;
 typedef struct TeSpecial TeSpecial;
 typedef struct Pickup Pickup;
+typedef struct Platform Platform;
 
 typedef enum InventoryItems {
 	INVENTORY_NOTHING = 0,
@@ -39,6 +40,6 @@ typedef struct Character {
 
 void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box *boxes, int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud);
 
-void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box *objects, int lenObjects, Pickup *pickups, int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader);
+void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box *boxes, int lenBoxes, Platform *platforms, int lenPlatforms, Pickup *pickups, int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader);
 
 #endif

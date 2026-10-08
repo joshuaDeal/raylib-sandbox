@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g
 
 TARGET = build/sandbox.bin
-SRC = src/sandbox.c src/buildtool.c src/character.c src/pickup.c src/savesystem.c src/soundsystem.c src/tespecial.c src/uisystem.c
+SRC = src/sandbox.c src/buildtool.c src/character.c src/pickup.c src/savesystem.c src/soundsystem.c src/tespecial.c src/uisystem.c src/platform.c
 LIBS = -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lcjson
 
 all: $(TARGET)
