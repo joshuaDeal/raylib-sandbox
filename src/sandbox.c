@@ -154,6 +154,11 @@ int main(void) {
 		littleMuzzleFlareModel.materials[i].shader = basicLightingShader;
 	}
 
+	Model playerModel = LoadModel("assets/models/mannequin.glb");
+	for (int i = 0; i < playerModel.materialCount; i++) {
+		playerModel.materials[i].shader = basicLightingShader;
+	}
+
 
 	// Ambient lighting
 	int ambientLoc = GetShaderLocation(basicLightingShader, "ambient");
@@ -388,8 +393,7 @@ int main(void) {
 	characters[0].jumpForce = PLAYER_JUMP_FORCE;
 	characters[0].yaw = 0.0f;
 	characters[0].pitch = 0.0f;
-	characters[0].model = LoadModelFromMesh(GenMeshCube(characters[0].size.x, characters[0].size.y, characters[0].size.z));
-	for (int i = 0; i < characters[0].model.materialCount; i++) characters[0].model.materials[i].shader = basicLightingShader;
+	characters[0].model = playerModel;
 	characters[0].footstepTimer = 0.0f;
 	characters[0].jumpBoost = false;
 	characters[0].landFlag = false;
@@ -405,10 +409,9 @@ int main(void) {
 	characters[1].isHuman = false;
 	characters[1].speed = PLAYER_SPEED;
 	characters[1].jumpForce = PLAYER_JUMP_FORCE;
-	characters[1].yaw = 0.0f;
+	characters[1].yaw = 3.14f;
 	characters[1].pitch = 0.0f;
-	characters[1].model = LoadModelFromMesh(GenMeshCube(characters[1].size.x, characters[1].size.y, characters[1].size.z));
-	for (int i = 0; i < characters[1].model.materialCount; i++) characters[1].model.materials[i].shader = basicLightingShader;
+	characters[1].model = playerModel;
 	characters[1].footstepTimer = 0.0f;
 	characters[1].jumpBoost = false;
 	characters[1].landFlag = false;
@@ -725,7 +728,8 @@ int main(void) {
 
 							// Draw characters 
 							for (int i = 0; i < lenCharacters; i++) {
-								DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, characters[i].color);
+								DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, characters[i].color);
+								DrawCubeWiresV(characters[i].position, characters[i].size, GREEN);
 							}
 
 							// Draw player inventory item
@@ -795,7 +799,8 @@ int main(void) {
 							// Draw characters (Except for player.)
 							for (int i = 0; i < lenCharacters; i++) {
 								if (!characters[i].isHuman) {
-									DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, characters[i].color);
+									DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, characters[i].color);
+									DrawCubeWiresV(characters[i].position, characters[i].size, GREEN);
 								}
 							}
 
@@ -887,10 +892,7 @@ int main(void) {
 	// De-initialization
 	UnloadShader(basicLightingShader);
 
-	for (int i = 0; i < lenCharacters; i++) {
-		UnloadModel(characters[i].model);
-	}
-
+	UnloadModel(playerModel);
 	UnloadModel(boxModel);
 	UnloadModel(donutModel);
 	UnloadModel(teSpecialModel);

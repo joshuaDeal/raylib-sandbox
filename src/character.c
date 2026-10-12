@@ -345,7 +345,7 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 	// ------------------------------------------
 	if (character->isHuman) {
 		// Player camera stuff
-		float eyeHeight = character->size.y / 4;
+		float eyeHeight = character->size.y / 2;
 		camera->position = (Vector3){ character->position.x, character->position.y + eyeHeight, character->position.z };
 
 		Vector3 forward = { cosf(character->pitch) * cosf(character->yaw), sinf(character->pitch), cosf(character->pitch) * sinf(character->yaw) };
