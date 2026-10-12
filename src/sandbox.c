@@ -375,22 +375,47 @@ int main(void) {
 	playerCamera.fovy = 60.0f;
 	playerCamera.projection = CAMERA_PERSPECTIVE;
 
-	// Create player
-	Character player = { 0 };
-	player.size = (Vector3){ 0.90f, 1.90f, 0.90f };
-	player.position = (Vector3){ 0.0f, 0.0f, 0.0f };
-	player.isHuman = true;
-	player.speed = PLAYER_SPEED;
-	player.jumpForce = PLAYER_JUMP_FORCE;
-	player.yaw = 0.0f;
-	player.pitch = 0.0f;
-	player.model = LoadModelFromMesh(GenMeshCube(player.size.x, player.size.y, player.size.z));
-	for (int i = 0; i < player.model.materialCount; i++) player.model.materials[i].shader = basicLightingShader;
-	player.footstepTimer = 0.0f;
-	player.jumpBoost = false;
-	player.landFlag = false;
-	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) player.inventory[i] = true;
-	player.inventoryIndex = 0;
+	// Create characters. 
+	int lenCharacters = 2;
+	Character characters [MAX_CHARACTERS];
+
+	// Player
+	characters[0] =  (Character){ 0 }; 
+	characters[0].size = (Vector3){ 0.90f, 1.90f, 0.90f };
+	characters[0].position = (Vector3){ 0.0f, 0.0f, 0.0f };
+	characters[0].isHuman = true;
+	characters[0].speed = PLAYER_SPEED;
+	characters[0].jumpForce = PLAYER_JUMP_FORCE;
+	characters[0].yaw = 0.0f;
+	characters[0].pitch = 0.0f;
+	characters[0].model = LoadModelFromMesh(GenMeshCube(characters[0].size.x, characters[0].size.y, characters[0].size.z));
+	for (int i = 0; i < characters[0].model.materialCount; i++) characters[0].model.materials[i].shader = basicLightingShader;
+	characters[0].footstepTimer = 0.0f;
+	characters[0].jumpBoost = false;
+	characters[0].landFlag = false;
+	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) characters[0].inventory[i] = true;
+	characters[0].inventoryIndex = 0;
+	characters[0].health = 100.0f;
+	characters[0].color = RED;
+
+	// NPC
+	characters[1] = (Character){ 0 }; 
+	characters[1].size = (Vector3){ 0.90f, 1.90f, 0.90f };
+	characters[1].position = (Vector3){ 5.0f, 0.0f, 0.0f };
+	characters[1].isHuman = false;
+	characters[1].speed = PLAYER_SPEED;
+	characters[1].jumpForce = PLAYER_JUMP_FORCE;
+	characters[1].yaw = 0.0f;
+	characters[1].pitch = 0.0f;
+	characters[1].model = LoadModelFromMesh(GenMeshCube(characters[1].size.x, characters[1].size.y, characters[1].size.z));
+	for (int i = 0; i < characters[1].model.materialCount; i++) characters[1].model.materials[i].shader = basicLightingShader;
+	characters[1].footstepTimer = 0.0f;
+	characters[1].jumpBoost = false;
+	characters[1].landFlag = false;
+	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) characters[1].inventory[i] = false;
+	characters[1].inventoryIndex = 0;
+	characters[1].health = 100.0f;
+	characters[1].color = BLUE;
 
 	// Create player weapons
 	TeSpecial playerTeSpecial = {6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
@@ -493,7 +518,7 @@ int main(void) {
 							fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
 							UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 							if (fileButtons[i].clicked) {
-								if (LoadGameData(saveFiles.paths[i], &player, boxes, &lenBoxes, boxModel)) {
+								if (LoadGameData(saveFiles.paths[i], &characters[0], boxes, &lenBoxes, boxModel)) {
 									menuScreen = MAIN_MENU;
 									screen = GAMEPLAY;
 									DisableCursor();
@@ -525,9 +550,15 @@ int main(void) {
 						break;
 					}
 
-					// Update player
-					UpdateCharacter(&player, &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, platforms, lenPlatforms, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
-					UpdateCharacterInventory(&player, &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
+					for (int i = 0; i < lenCharacters; i++) {
+						if (characters[i].isHuman) {
+							UpdatePlayerCharacter(&characters[i], &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, platforms, lenPlatforms, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
+							UpdateCharacterInventory(&characters[i], &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
+						}
+						else {
+							UpdateNPC(&characters[i], playerCamera, gravity, boxes, lenBoxes, platforms, lenPlatforms, fxStep, fxLand);
+						}
+					}
 
 					// Update some lights
 					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
@@ -591,7 +622,7 @@ int main(void) {
 								char *newSaveName = GetNewSaveFileName(&saveFiles);
 
 								if (newSaveName != NULL) {
-									if (SaveGameData(newSaveName, &player, boxes, lenBoxes)) {
+									if (SaveGameData(newSaveName, &characters[0], boxes, lenBoxes)) {
 										TraceLog(LOG_INFO, "Game saved to %s.", newSaveName);
 										// TODO: We'll need to be able to update saveFiles and all the things dependant on it after creating a new save.
 									}
@@ -615,7 +646,7 @@ int main(void) {
 								fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
 								UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 								if (fileButtons[i].clicked) {
-									if (SaveGameData(saveFiles.paths[i], &player, boxes, lenBoxes)) {
+									if (SaveGameData(saveFiles.paths[i], &characters[0], boxes, lenBoxes)) {
 										TraceLog(LOG_INFO, "Game saved to %s.", saveFiles.paths[i]);
 										fileButtons[i].clicked = false;
 										break;
@@ -692,11 +723,13 @@ int main(void) {
 
 						BeginShaderMode(basicLightingShader);
 
-							// Draw player
-							DrawModelEx(player.model, player.position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(player.yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, RED);
+							// Draw characters 
+							for (int i = 0; i < lenCharacters; i++) {
+								DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, characters[i].color);
+							}
 
 							// Draw player inventory item
-							switch (player.inventoryIndex) {
+							switch (characters[0].inventoryIndex) {
 								case INVENTORY_NOTHING: {
 									break;
 								}; break;
@@ -746,7 +779,7 @@ int main(void) {
 							DrawPickups(pickups, lenPickups);
 
 							// Draw player inventory item
-							switch (player.inventoryIndex) {
+							switch (characters[0].inventoryIndex) {
 								case INVENTORY_NOTHING: {
 									break;
 								}; break;
@@ -757,6 +790,13 @@ int main(void) {
 									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
 								}
 								default: break;
+							}
+
+							// Draw characters (Except for player.)
+							for (int i = 0; i < lenCharacters; i++) {
+								if (!characters[i].isHuman) {
+									DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1, 1, 1 }, characters[i].color);
+								}
 							}
 
 						EndShaderMode();
@@ -787,8 +827,8 @@ int main(void) {
 					// Inventory
 					if (showInventory) {
 						// Evaluate current item
-						const char* itemText = TextFormat("%d", player.inventoryIndex);
-						switch (player.inventoryIndex) {
+						const char* itemText = TextFormat("%d", characters[0].inventoryIndex);
+						switch (characters[0].inventoryIndex) {
 							case INVENTORY_NOTHING: itemText = "None"; break;
 							case INVENTORY_BUILD_TOOL: itemText = "Build Tool"; break;
 							case INVENTORY_TESPECIAL: itemText = ".38 Special"; break;
@@ -847,7 +887,10 @@ int main(void) {
 	// De-initialization
 	UnloadShader(basicLightingShader);
 
-	UnloadModel(player.model);
+	for (int i = 0; i < lenCharacters; i++) {
+		UnloadModel(characters[i].model);
+	}
+
 	UnloadModel(boxModel);
 	UnloadModel(donutModel);
 	UnloadModel(teSpecialModel);

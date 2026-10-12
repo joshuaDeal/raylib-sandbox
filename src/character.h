@@ -5,6 +5,7 @@
 #define PLAYER_JUMP_FORCE 5.0f
 #define NUM_INVENTORY_ITEMS 3
 #define COLLISION_EPSILON 0.0001f
+#define MAX_CHARACTERS 5
 
 #include "soundsystem.h"
 
@@ -36,10 +37,14 @@ typedef struct Character {
 	bool landFlag;
 	bool inventory[NUM_INVENTORY_ITEMS];
 	int inventoryIndex;
+	float health;
+	Color color;
 } Character;
 
 void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box *boxes, int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud);
 
-void UpdateCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box *boxes, int lenBoxes, Platform *platforms, int lenPlatforms, Pickup *pickups, int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader);
+void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box *boxes, int lenBoxes, Platform *platforms, int lenPlatforms, Pickup *pickups, int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader);
+
+void UpdateNPC(Character *character, Camera playerCamera, float gravity, Box *boxes, int lenBoxes, Platform *platforms, int lenPlatforms, Sound walkSound, Sound landSound);
 
 #endif
