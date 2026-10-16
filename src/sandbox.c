@@ -49,8 +49,8 @@ void DrawFloor(int slicesX, int slicesZ, float spacing, float xMin, float zMin) 
 
 int main(void) {
 	// Initialization
-	const int screenWidth = 800;
-	const int screenHeight = 450;
+	int screenWidth = 800;
+	int screenHeight = 450;
 
 	// Multi-sample Anti-Aliasing
 	SetConfigFlags(FLAG_MSAA_4X_HINT);
@@ -78,7 +78,7 @@ int main(void) {
 			fileButtons[i].size = (Vector2){ 150, 38 };
 			fileButtons[i].buttonText = fileName;
 			fileButtons[i].fontSize = 15;
-			fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), 125 + yOffset };
+			fileButtons[i].position = (Vector2){ (screenWidth / 2) - (fileButtons[i].size.x / 2), 125 + yOffset };
 			fileButtons[i].buttonColor = RAYWHITE;
 			fileButtons[i].borderColor = GRAY;
 			fileButtons[i].textColor = BLACK;
@@ -96,7 +96,7 @@ int main(void) {
 	newSaveButton.size = (Vector2){ 150, 38 };
 	newSaveButton.buttonText = "New Save";
 	newSaveButton.fontSize = 15;
-	newSaveButton.position = (Vector2){ (GetScreenWidth() / 2) - (newSaveButton.size.x / 2), 125 + yOffset };
+	newSaveButton.position = (Vector2){ (screenWidth / 2) - (newSaveButton.size.x / 2), 125 + yOffset };
 	newSaveButton.buttonColor = RAYWHITE;
 	newSaveButton.borderColor = GRAY;
 	newSaveButton.textColor = BLACK;
@@ -176,7 +176,7 @@ int main(void) {
 	newGameButton.size = (Vector2){ 200, 50 };
 	newGameButton.buttonText = "New Game";
 	newGameButton.fontSize = 20;
-	newGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (newGameButton.size.x / 2), (GetScreenHeight() / 2) - (newGameButton.size.y / 2) - 25 };
+	newGameButton.position = (Vector2){ (screenWidth / 2) - (newGameButton.size.x / 2), (screenHeight / 2) - (newGameButton.size.y / 2) - 25 };
 	newGameButton.buttonColor = RAYWHITE;
 	newGameButton.borderColor = GRAY;
 	newGameButton.textColor = BLACK;
@@ -188,7 +188,7 @@ int main(void) {
 	loadGameButton.size = (Vector2){ 200, 50 };
 	loadGameButton.buttonText = "Load Game";
 	loadGameButton.fontSize = 20;
-	loadGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (loadGameButton.size.x / 2), (GetScreenHeight() / 2) - (loadGameButton.size.y / 2) + 50 };
+	loadGameButton.position = (Vector2){ (screenWidth / 2) - (loadGameButton.size.x / 2), (screenHeight / 2) - (loadGameButton.size.y / 2) + 50 };
 	loadGameButton.buttonColor = RAYWHITE;
 	loadGameButton.borderColor = GRAY;
 	loadGameButton.textColor = BLACK;
@@ -200,7 +200,7 @@ int main(void) {
 	quitGameButton.size = (Vector2){ 200, 50 };
 	quitGameButton.buttonText = "Quit";
 	quitGameButton.fontSize = 20;
-	quitGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitGameButton.size.x / 2), (GetScreenHeight() / 2) - (quitGameButton.size.y / 2) + 125 };
+	quitGameButton.position = (Vector2){ (screenWidth / 2) - (quitGameButton.size.x / 2), (screenHeight / 2) - (quitGameButton.size.y / 2) + 125 };
 	quitGameButton.buttonColor = RAYWHITE;
 	quitGameButton.borderColor = GRAY;
 	quitGameButton.textColor = BLACK;
@@ -213,7 +213,7 @@ int main(void) {
 	returnToMainButton.size = (Vector2){ 200, 50 };
 	returnToMainButton.buttonText = "<-";
 	returnToMainButton.fontSize = 20;
-	returnToMainButton.position = (Vector2){ (GetScreenWidth() / 100), (GetScreenHeight() / 100) };
+	returnToMainButton.position = (Vector2){ (screenWidth / 100), (screenHeight / 100) };
 	returnToMainButton.buttonColor = RAYWHITE;
 	returnToMainButton.borderColor = GRAY;
 	returnToMainButton.textColor = BLACK;
@@ -226,7 +226,7 @@ int main(void) {
 	resumeButton.size = (Vector2){ 200, 50 };
 	resumeButton.buttonText = "Resume";
 	resumeButton.fontSize = 20;
-	resumeButton.position = (Vector2){ (GetScreenWidth() / 2) - (resumeButton.size.x / 2), (GetScreenHeight() / 2) - (resumeButton.size.y / 2) - 25 };
+	resumeButton.position = (Vector2){ (screenWidth / 2) - (resumeButton.size.x / 2), (screenHeight / 2) - (resumeButton.size.y / 2) - 25 };
 	resumeButton.buttonColor = RAYWHITE;
 	resumeButton.borderColor = GRAY;
 	resumeButton.textColor = BLACK;
@@ -238,7 +238,7 @@ int main(void) {
 	saveGameButton.size = (Vector2){ 200, 50 };
 	saveGameButton.buttonText = "Save Game";
 	saveGameButton.fontSize = 20;
-	saveGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (saveGameButton.size.x / 2), (GetScreenHeight() / 2) - (saveGameButton.size.y / 2) + 50 };
+	saveGameButton.position = (Vector2){ (screenWidth / 2) - (saveGameButton.size.x / 2), (screenHeight / 2) - (saveGameButton.size.y / 2) + 50 };
 	saveGameButton.buttonColor = RAYWHITE;
 	saveGameButton.borderColor = GRAY;
 	saveGameButton.textColor = BLACK;
@@ -250,7 +250,7 @@ int main(void) {
 	quitToMenuButton.size = (Vector2){ 200, 50 };
 	quitToMenuButton.buttonText = "Quit to menu";
 	quitToMenuButton.fontSize = 20;
-	quitToMenuButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitToMenuButton.size.x / 2), (GetScreenHeight() / 2) - (quitToMenuButton.size.y / 2) + 125 };
+	quitToMenuButton.position = (Vector2){ (screenWidth / 2) - (quitToMenuButton.size.x / 2), (screenHeight / 2) - (quitToMenuButton.size.y / 2) + 125 };
 	quitToMenuButton.buttonColor = RAYWHITE;
 	quitToMenuButton.borderColor = GRAY;
 	quitToMenuButton.textColor = BLACK;
@@ -476,14 +476,18 @@ int main(void) {
 		// ------------------------------------------
 
 		// Basic fullscreen toggle
-		if (IsKeyPressed(KEY_F11)) ToggleFullscreen();
+		if (IsKeyPressed(KEY_F11)) {
+			ToggleFullscreen();
+			screenWidth = GetScreenWidth();
+			screenHeight = GetScreenHeight();
+		}
 
 		switch (screen) {
 			case MENU: {
 				switch (menuScreen) {
 					case MAIN_MENU: {
 						// Menu buttons
-						newGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (newGameButton.size.x / 2), (GetScreenHeight() / 2) - (newGameButton.size.y / 2) - 25 };
+						newGameButton.position = (Vector2){ (screenWidth / 2) - (newGameButton.size.x / 2), (screenHeight / 2) - (newGameButton.size.y / 2) - 25 };
 						UpdateMenuButton(&newGameButton, fxUIHover, fxUIClick);
 						if (newGameButton.clicked) {
 							DisableCursor();
@@ -491,14 +495,14 @@ int main(void) {
 							newGameButton.clicked = false;
 						}
 
-						loadGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (loadGameButton.size.x / 2), (GetScreenHeight() / 2) - (loadGameButton.size.y / 2) + 50 };
+						loadGameButton.position = (Vector2){ (screenWidth / 2) - (loadGameButton.size.x / 2), (screenHeight / 2) - (loadGameButton.size.y / 2) + 50 };
 						UpdateMenuButton(&loadGameButton, fxUIHover, fxUIClick);
 						if (loadGameButton.clicked) {
 							menuScreen = LOAD_GAME;
 							loadGameButton.clicked = false;
 						}
 
-						quitGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitGameButton.size.x / 2), (GetScreenHeight() / 2) - (quitGameButton.size.y / 2) + 125 };
+						quitGameButton.position = (Vector2){ (screenWidth / 2) - (quitGameButton.size.x / 2), (screenHeight / 2) - (quitGameButton.size.y / 2) + 125 };
 						UpdateMenuButton(&quitGameButton, fxUIHover, fxUIClick);
 						if (quitGameButton.clicked) {
 							exitWindow = true;
@@ -508,7 +512,7 @@ int main(void) {
 
 					case LOAD_GAME: {
 						// Buttons
-						returnToMainButton.position = (Vector2){ 10, GetScreenHeight() - (returnToMainButton.size.y + 10) };
+						returnToMainButton.position = (Vector2){ 10, screenHeight - (returnToMainButton.size.y + 10) };
 						UpdateMenuButton(&returnToMainButton, fxUIHover, fxUIClick);
 						if (returnToMainButton.clicked) {
 							menuScreen = MAIN_MENU;
@@ -518,7 +522,7 @@ int main(void) {
 						// File buttons
 						int yOffset = 0;
 						for (int i = 0; i < (int)saveFiles.count; i++) {
-							fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
+							fileButtons[i].position = (Vector2){ (screenWidth / 2) - (fileButtons[i].size.x / 2), (screenHeight / 2 - 90) + yOffset };
 							UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 							if (fileButtons[i].clicked) {
 								if (LoadGameData(saveFiles.paths[i], &characters[0], boxes, &lenBoxes, boxModel)) {
@@ -583,7 +587,7 @@ int main(void) {
 						case MAIN_PAUSE_MENU: {
 
 							// Buttons
-							resumeButton.position = (Vector2){ (GetScreenWidth() / 2) - (resumeButton.size.x / 2), (GetScreenHeight() / 2) - (resumeButton.size.y / 2) - 25 };
+							resumeButton.position = (Vector2){ (screenWidth / 2) - (resumeButton.size.x / 2), (screenHeight / 2) - (resumeButton.size.y / 2) - 25 };
 							UpdateMenuButton(&resumeButton, fxUIHover, fxUIClick);
 							if (resumeButton.clicked) {
 								DisableCursor();
@@ -591,14 +595,14 @@ int main(void) {
 								resumeButton.clicked = false;
 							}
 
-							saveGameButton.position = (Vector2){ (GetScreenWidth() / 2) - (saveGameButton.size.x / 2), (GetScreenHeight() / 2) - (saveGameButton.size.y / 2) + 50 };
+							saveGameButton.position = (Vector2){ (screenWidth / 2) - (saveGameButton.size.x / 2), (screenHeight / 2) - (saveGameButton.size.y / 2) + 50 };
 							UpdateMenuButton(&saveGameButton, fxUIHover, fxUIClick);
 							if (saveGameButton.clicked) {
 								pauseScreen = SAVE_GAME;
 								saveGameButton.clicked = false;
 							}
 
-							quitToMenuButton.position = (Vector2){ (GetScreenWidth() / 2) - (quitToMenuButton.size.x / 2), (GetScreenHeight() / 2) - (quitToMenuButton.size.y / 2) + 125 };
+							quitToMenuButton.position = (Vector2){ (screenWidth / 2) - (quitToMenuButton.size.x / 2), (screenHeight / 2) - (quitToMenuButton.size.y / 2) + 125 };
 							UpdateMenuButton(&quitToMenuButton, fxUIHover, fxUIClick);
 							if (quitToMenuButton.clicked) {
 								EnableCursor();
@@ -610,7 +614,7 @@ int main(void) {
 
 						case SAVE_GAME: {
 							// Buttons
-							returnToMainButton.position = (Vector2){ 10, GetScreenHeight() - (returnToMainButton.size.y + 10) };
+							returnToMainButton.position = (Vector2){ 10, screenHeight - (returnToMainButton.size.y + 10) };
 							UpdateMenuButton(&returnToMainButton, fxUIHover, fxUIClick);
 							if (returnToMainButton.clicked) {
 								pauseScreen = MAIN_PAUSE_MENU;
@@ -619,7 +623,7 @@ int main(void) {
 
 							// New save button
 							int yOffset = 0;
-							newSaveButton.position = (Vector2){ (GetScreenWidth() / 2) - (newSaveButton.size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
+							newSaveButton.position = (Vector2){ (screenWidth / 2) - (newSaveButton.size.x / 2), (screenHeight / 2 - 90) + yOffset };
 							UpdateMenuButton(&newSaveButton, fxUIHover, fxUIClick);
 							if (newSaveButton.clicked) {
 								char *newSaveName = GetNewSaveFileName(&saveFiles);
@@ -646,7 +650,7 @@ int main(void) {
 							yOffset += 40;
 							// File buttons
 							for (int i = 0; i < (int)saveFiles.count; i++) {
-								fileButtons[i].position = (Vector2){ (GetScreenWidth() / 2) - (fileButtons[i].size.x / 2), (GetScreenHeight() / 2 - 90) + yOffset };
+								fileButtons[i].position = (Vector2){ (screenWidth / 2) - (fileButtons[i].size.x / 2), (screenHeight / 2 - 90) + yOffset };
 								UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 								if (fileButtons[i].clicked) {
 									if (SaveGameData(saveFiles.paths[i], &characters[0], boxes, lenBoxes)) {
@@ -688,7 +692,7 @@ int main(void) {
 							ClearBackground(BLACK);
 
 							// Draw title
-							DrawText("Josh's Raylib Sandbox", GetScreenWidth()/2 - MeasureText("Josh's Raylib Sandbox", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+							DrawText("Josh's Raylib Sandbox", screenWidth/2 - MeasureText("Josh's Raylib Sandbox", 50)/2, screenHeight/2 - 150, 50, RAYWHITE);
 
 							// Draw menu buttons
 							DrawMenuButton(newGameButton);
@@ -702,7 +706,7 @@ int main(void) {
 							ClearBackground(BLACK);
 
 							// Draw page title
-							DrawText("Load Game", GetScreenWidth()/2 - MeasureText("Load Game", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+							DrawText("Load Game", screenWidth/2 - MeasureText("Load Game", 50)/2, screenHeight/2 - 150, 50, RAYWHITE);
 
 							// Draw files list buttons
 							for (int i = 0; i < (int)saveFiles.count; i++) {
@@ -815,14 +819,14 @@ int main(void) {
 					EndMode3D();
 
 					// Draw crosshair
-					DrawRectangle((GetScreenWidth() / 2) - (8 / 2), (GetScreenHeight() / 2) - (2 / 2), 8, 2, DARKGREEN);
-					DrawRectangle((GetScreenWidth() / 2) - (2 / 2), (GetScreenHeight() / 2) - (8 / 2), 2, 8, DARKGREEN);
+					DrawRectangle((screenWidth / 2) - (8 / 2), (screenHeight / 2) - (2 / 2), 8, 2, DARKGREEN);
+					DrawRectangle((screenWidth / 2) - (2 / 2), (screenHeight / 2) - (8 / 2), 2, 8, DARKGREEN);
 
 					// Draw viewport
 					DrawTextureRec(viewport.texture, viewportRect, (Vector2){ 10, 10 }, WHITE);
 
 					// Draw fps
-					DrawFPS(GetScreenWidth() - 100, 10);
+					DrawFPS(screenWidth - 100, 10);
 
 					// Color picker
 					if (showColorPicker) {
@@ -840,23 +844,23 @@ int main(void) {
 							default: break;
 						}
 
-						DrawText(itemText, GetScreenWidth()/2 - MeasureText(itemText, 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+						DrawText(itemText, screenWidth/2 - MeasureText(itemText, 50)/2, screenHeight/2 - 150, 50, RAYWHITE);
 					}
 
 					// .38 Special ammunition
 					if (showTeSpecialHud) {
 						const char* ammoText = TextFormat("%d/%d", playerTeSpecial.roundsLoaded, playerTeSpecial.extraRounds);
-						DrawText(ammoText, GetScreenWidth() - MeasureText(ammoText, 50) - (GetScreenWidth() / 100), GetScreenHeight() - 50, 50, RAYWHITE);
+						DrawText(ammoText, screenWidth - MeasureText(ammoText, 50) - (screenWidth / 100), screenHeight - 50, 50, RAYWHITE);
 					}
 
 					// Game Paused
 					if (gamePaused) {
 						// Draw pause backdrop
-						DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.5f));
+						DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, 0.5f));
 
 						switch (pauseScreen) {
 							case MAIN_PAUSE_MENU: {
-								DrawText("Paused", GetScreenWidth()/2 - MeasureText("Paused", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+								DrawText("Paused", screenWidth/2 - MeasureText("Paused", 50)/2, screenHeight/2 - 150, 50, RAYWHITE);
 
 								// Draw buttons
 								DrawMenuButton(resumeButton);
@@ -865,7 +869,7 @@ int main(void) {
 							} break;
 
 							case SAVE_GAME: {
-								DrawText("Save Game", GetScreenWidth()/2 - MeasureText("Save Game", 50)/2, GetScreenHeight()/2 - 150, 50, RAYWHITE);
+								DrawText("Save Game", screenWidth/2 - MeasureText("Save Game", 50)/2, screenHeight/2 - 150, 50, RAYWHITE);
 
 								// Draw new save button
 								DrawMenuButton(newSaveButton);
