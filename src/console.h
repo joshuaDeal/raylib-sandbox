@@ -3,6 +3,7 @@
 
 #define CONSOLE_LOG_LENGTH 100
 #define CONSOLE_LOG_TEXT_SIZE 256
+#define CONSOLE_COMMAND_LENGTH 256
 
 #include <raylib.h>
 
@@ -16,6 +17,8 @@ typedef struct Console {
 	bool visible;
 	ConsoleLogEntry logs[CONSOLE_LOG_LENGTH];
 	int lenLog;
+	char command[CONSOLE_COMMAND_LENGTH + 1];
+	int lenCommand;
 } Console;
 
 void AddConsoleLog(Console *console, int level, const char *text);

@@ -504,6 +504,11 @@ int main(void) {
 		// Toggle console
 		if (IsKeyPressed(KEY_GRAVE)) {
 			console.visible = !console.visible;
+			characters[0].isHuman = !characters[0].isHuman;
+		}
+
+		if (console.visible && console.enabled) {
+			UpdateConsole(&console);
 		}
 
 		switch (screen) {

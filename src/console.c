@@ -18,7 +18,29 @@ void AddConsoleLog(Console *console, int level, const char *text) {
 }
 
 void UpdateConsole(Console *console) {
-	(void)console;
+	// Get user input
+	int key = GetCharPressed();
+
+	while (key > 0) {
+		if ((key >=32) && (key <= 125) && (key != 96) && (console->lenCommand < CONSOLE_COMMAND_LENGTH)) {
+			console->command[console->lenCommand] = (char)key;
+			console->command[console->lenCommand + 1] = '\0';
+			console->lenCommand++;
+		}
+
+		key = GetCharPressed();
+	}
+
+	if (IsKeyPressed(KEY_BACKSPACE)) {
+		console->lenCommand--;
+		if (console->lenCommand < 0) console->lenCommand = 0;
+		console->command[console->lenCommand] = '\0';
+	}
+
+	if (IsKeyDown(KEY_U) && IsKeyDown(KEY_LEFT_CONTROL)) {
+		console->lenCommand = 0;
+		console->command[console->lenCommand] = '\0';
+	}
 }
 
 void DrawConsole(Console console, int screenWidth, int screenHeight) {
@@ -49,4 +71,7 @@ void DrawConsole(Console console, int screenWidth, int screenHeight) {
 		DrawText(console.logs[i].text, 10, y, 16, color);
 		y += lineHeight;
 	}
+
+	// Draw input area.
+	DrawText(console.command, 10, y, 16, RAYWHITE);
 }
