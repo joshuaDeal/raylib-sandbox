@@ -518,12 +518,12 @@ int main(void) {
 		// Toggle console
 		if (IsKeyPressed(KEY_GRAVE)) {
 			console.visible = !console.visible;
-			gameState.characters[0].isHuman = !gameState.characters[0].isHuman;
 		}
 
 		if (console.visible && console.enabled) {
 			UpdateConsole(&console);
-		}
+			gameState.characters[0].isHuman = false;
+		} else gameState.characters[0].isHuman = true;
 
 		switch (screen) {
 			case MENU: {
