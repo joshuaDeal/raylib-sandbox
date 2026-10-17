@@ -34,6 +34,21 @@ typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
 typedef enum MenuScreen { MAIN_MENU, LOAD_GAME } MenuScreen;
 typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
 
+typedef struct GameState {
+	Camera3D genericCamera;
+	Camera3D playerCamera;
+	int lenCharacters;
+	Character characters[MAX_CHARACTERS];
+	TeSpecial playerTeSpecial;
+	int lenBoxes;
+	Box boxes[MAX_BOXES];
+	int lenPlatforms;
+	Platform platforms[MAX_PLATFORMS];
+	Pickup pickups[MAX_PICKUPS];
+	int lenPickups;
+	float gravity;
+} GameState;
+
 // Console for trace log
 static Console *consoleForTraceLog;
 
@@ -79,6 +94,9 @@ int main(void) {
 	console.visible = false;
 	consoleForTraceLog = &console;
 	SetTraceLogCallback(ConsoleTraceLogCallback);
+
+	// GameState
+	GameState gameState = { 0 };
 
 	// Shaders
 	Shader basicLightingShader = LoadShader("assets/shaders/lighting.vs", "assets/shaders/lighting.fs");
@@ -380,108 +398,104 @@ int main(void) {
 	float showInventoryTimer = 0.0f;
 
 	// Create generic camera
-	Camera3D genericCamera = { 0 };
-	genericCamera.position = (Vector3){ -5.0f, 5.0f, 5.0f };
-	genericCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-	genericCamera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-	genericCamera.fovy = 60.0f;
-	genericCamera.projection = CAMERA_PERSPECTIVE;
+	gameState.genericCamera = (Camera3D){ 0 };
+	gameState.genericCamera.position = (Vector3){ -5.0f, 5.0f, 5.0f };
+	gameState.genericCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+	gameState.genericCamera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+	gameState.genericCamera.fovy = 60.0f;
+	gameState.genericCamera.projection = CAMERA_PERSPECTIVE;
 
 	// Viewport for generic camera
 	RenderTexture2D viewport = LoadRenderTexture(screenWidth / 4, screenHeight / 4);
 	Rectangle viewportRect = { 0.0f, 0.0f, (float)viewport.texture.width, (float)-viewport.texture.height };
 
 	// Create player camera
-	Camera3D playerCamera = { 0 };
-	playerCamera.position = (Vector3){ 0.0f, 0.0f, 10.0f };
-	playerCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
-	playerCamera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
-	playerCamera.fovy = 60.0f;
-	playerCamera.projection = CAMERA_PERSPECTIVE;
+	gameState.playerCamera = (Camera3D){ 0 };
+	gameState.playerCamera.position = (Vector3){ 0.0f, 0.0f, 10.0f };
+	gameState.playerCamera.target = (Vector3){ 0.0f, 0.0f, 0.0f };
+	gameState.playerCamera.up = (Vector3){ 0.0f, 1.0f, 0.0f };
+	gameState.playerCamera.fovy = 60.0f;
+	gameState.playerCamera.projection = CAMERA_PERSPECTIVE;
 
 	// Create characters. 
-	int lenCharacters = 2;
-	Character characters [MAX_CHARACTERS];
+	gameState.lenCharacters = 2;
 
 	// Player
-	characters[0] = (Character){ 0 }; 
-	characters[0].size = (Vector3){ 0.90f, 1.90f, 0.90f };
-	characters[0].position = (Vector3){ 0.0f, 0.0f, 0.0f };
-	characters[0].isHuman = true;
-	characters[0].speed = PLAYER_SPEED;
-	characters[0].jumpForce = PLAYER_JUMP_FORCE;
-	characters[0].yaw = 0.0f;
-	characters[0].pitch = 0.0f;
-	characters[0].model = playerModel;
-	characters[0].footstepTimer = 0.0f;
-	characters[0].jumpBoost = false;
-	characters[0].landFlag = false;
-	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) characters[0].inventory[i] = true;
-	characters[0].inventoryIndex = 0;
-	characters[0].health = 100.0f;
-	characters[0].color = RED;
+	gameState.characters[0] = (Character){ 0 }; 
+	gameState.characters[0].size = (Vector3){ 0.90f, 1.90f, 0.90f };
+	gameState.characters[0].position = (Vector3){ 0.0f, 0.0f, 0.0f };
+	gameState.characters[0].isHuman = true;
+	gameState.characters[0].speed = PLAYER_SPEED;
+	gameState.characters[0].jumpForce = PLAYER_JUMP_FORCE;
+	gameState.characters[0].yaw = 0.0f;
+	gameState.characters[0].pitch = 0.0f;
+	gameState.characters[0].model = playerModel;
+	gameState.characters[0].footstepTimer = 0.0f;
+	gameState.characters[0].jumpBoost = false;
+	gameState.characters[0].landFlag = false;
+	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) gameState.characters[0].inventory[i] = true;
+	gameState.characters[0].inventoryIndex = 0;
+	gameState.characters[0].health = 100.0f;
+	gameState.characters[0].color = RED;
 
 	// NPC
-	characters[1] = (Character){ 0 }; 
-	characters[1].size = (Vector3){ 0.90f, 1.90f, 0.90f };
-	characters[1].position = (Vector3){ 5.0f, 0.0f, 0.0f };
-	characters[1].isHuman = false;
-	characters[1].speed = PLAYER_SPEED;
-	characters[1].jumpForce = PLAYER_JUMP_FORCE;
-	characters[1].yaw = 3.14f;
-	characters[1].pitch = 0.0f;
-	characters[1].model = playerModel;
-	characters[1].footstepTimer = 0.0f;
-	characters[1].jumpBoost = false;
-	characters[1].landFlag = false;
-	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) characters[1].inventory[i] = false;
-	characters[1].inventoryIndex = 0;
-	characters[1].health = 100.0f;
-	characters[1].color = BLUE;
+	gameState.characters[1] = (Character){ 0 }; 
+	gameState.characters[1].size = (Vector3){ 0.90f, 1.90f, 0.90f };
+	gameState.characters[1].position = (Vector3){ 5.0f, 0.0f, 0.0f };
+	gameState.characters[1].isHuman = false;
+	gameState.characters[1].speed = PLAYER_SPEED;
+	gameState.characters[1].jumpForce = PLAYER_JUMP_FORCE;
+	gameState.characters[1].yaw = 3.14f;
+	gameState.characters[1].pitch = 0.0f;
+	gameState.characters[1].model = playerModel;
+	gameState.characters[1].footstepTimer = 0.0f;
+	gameState.characters[1].jumpBoost = false;
+	gameState.characters[1].landFlag = false;
+	for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) gameState.characters[1].inventory[i] = false;
+	gameState.characters[1].inventoryIndex = 0;
+	gameState.characters[1].health = 100.0f;
+	gameState.characters[1].color = BLUE;
 
 	// Create player weapons
-	TeSpecial playerTeSpecial = {6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
-	playerTeSpecial.flareLight.enabled = false;
+	gameState.playerTeSpecial = (TeSpecial){6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, basicLightingShader)};
+	gameState.playerTeSpecial.flareLight.enabled = false;
 	bool showTeSpecialHud = false;
 
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
 	for (int i = 0; i < boxModel.materialCount; i++) boxModel.materials[i].shader = basicLightingShader;
-	int lenBoxes = 1;
-	Box boxes[MAX_BOXES];
-	boxes[0] = (Box){(Vector3){ 1.0f, 0.5f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, ORANGE, 100.0f};
+	gameState.lenBoxes = 1;
+	gameState.boxes[0] = (Box){(Vector3){ 1.0f, 0.5f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, ORANGE, 100.0f};
 
 	// Create platforms
-	int lenPlatforms = 5;
-	Platform platforms[MAX_PLATFORMS];
-	platforms[0] = (Platform){ .position = (Vector3){ 0.0f, -0.25f, 0.0f }, .size = (Vector3){ 20.0f, 0.5f, 20.0f }, .color = GREEN, .solid = true };
-	platforms[0].model = CreatePlatformModel(platforms[0].size, basicLightingShader);
-	platforms[1] = (Platform){ .position = (Vector3){ 10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
-	platforms[1].model = CreatePlatformModel(platforms[1].size, basicLightingShader);
-	platforms[2] = (Platform){ .position = (Vector3){ -10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
-	platforms[2].model = CreatePlatformModel(platforms[2].size, basicLightingShader);
-	platforms[3] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, 10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
-	platforms[3].model = CreatePlatformModel(platforms[3].size, basicLightingShader);
-	platforms[4] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, -10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
-	platforms[4].model = CreatePlatformModel(platforms[4].size, basicLightingShader);
+	gameState.lenPlatforms = 5;
+	gameState.platforms[0] = (Platform){ .position = (Vector3){ 0.0f, -0.25f, 0.0f }, .size = (Vector3){ 20.0f, 0.5f, 20.0f }, .color = GREEN, .solid = true };
+	gameState.platforms[0].model = CreatePlatformModel(gameState.platforms[0].size, basicLightingShader);
+	gameState.platforms[1] = (Platform){ .position = (Vector3){ 10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
+	gameState.platforms[1].model = CreatePlatformModel(gameState.platforms[1].size, basicLightingShader);
+	gameState.platforms[2] = (Platform){ .position = (Vector3){ -10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
+	gameState.platforms[2].model = CreatePlatformModel(gameState.platforms[2].size, basicLightingShader);
+	gameState.platforms[3] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, 10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
+	gameState.platforms[3].model = CreatePlatformModel(gameState.platforms[3].size, basicLightingShader);
+	gameState.platforms[4] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, -10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
+	gameState.platforms[4].model = CreatePlatformModel(gameState.platforms[4].size, basicLightingShader);
 
 	// Create pickups
-	Pickup pickups[MAX_PICKUPS];
-	int lenPickups = 6;
-	pickups[0] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[0].light = CreateLight(LIGHT_POINT, pickups[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	pickups[1] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[1].light = CreateLight(LIGHT_POINT, pickups[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	pickups[2] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[2].light = CreateLight(LIGHT_POINT, pickups[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	pickups[3] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[3].light = CreateLight(LIGHT_POINT, pickups[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	pickups[4] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[4].light = CreateLight(LIGHT_POINT, pickups[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
-	pickups[5] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
-	pickups[5].light = CreateLight(LIGHT_POINT, pickups[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.lenPickups = 6;
+	gameState.pickups[0] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[0].light = CreateLight(LIGHT_POINT, gameState.pickups[0].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.pickups[1] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -3.0f, 3.95f, 4.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 3.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[1].light = CreateLight(LIGHT_POINT, gameState.pickups[1].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.pickups[2] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ 2.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[2].light = CreateLight(LIGHT_POINT, gameState.pickups[2].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.pickups[3] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -5.0f, 0.95f, -5.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[3].light = CreateLight(LIGHT_POINT, gameState.pickups[3].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.pickups[4] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -10.0f, 0.95f, 9.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[4].light = CreateLight(LIGHT_POINT, gameState.pickups[4].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
+	gameState.pickups[5] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = (Vector3){ -1.0f, 0.95f, 45.0f }, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = 0.95f, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+	gameState.pickups[5].light = CreateLight(LIGHT_POINT, gameState.pickups[5].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, basicLightingShader);
 
-	float gravity = 10.0f;
+	gameState.gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
 
 	RayCollision boxClickCollision = { 0 };
@@ -504,7 +518,7 @@ int main(void) {
 		// Toggle console
 		if (IsKeyPressed(KEY_GRAVE)) {
 			console.visible = !console.visible;
-			characters[0].isHuman = !characters[0].isHuman;
+			gameState.characters[0].isHuman = !gameState.characters[0].isHuman;
 		}
 
 		if (console.visible && console.enabled) {
@@ -554,7 +568,7 @@ int main(void) {
 							fileButtons[i].position = (Vector2){ (screenWidth / 2) - (fileButtons[i].size.x / 2), (screenHeight / 2 - 90) + yOffset };
 							UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 							if (fileButtons[i].clicked) {
-								if (LoadGameData(saveFiles.paths[i], &characters[0], boxes, &lenBoxes, boxModel)) {
+								if (LoadGameData(saveFiles.paths[i], &gameState.characters[0], gameState.boxes, &gameState.lenBoxes, boxModel)) {
 									menuScreen = MAIN_MENU;
 									screen = GAMEPLAY;
 									DisableCursor();
@@ -586,21 +600,21 @@ int main(void) {
 						break;
 					}
 
-					for (int i = 0; i < lenCharacters; i++) {
-						if (characters[i].isHuman) {
-							UpdatePlayerCharacter(&characters[i], &playerCamera, mouseSensitivity, gravity, boxes, lenBoxes, platforms, lenPlatforms, pickups, lenPickups, &playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
-							UpdateCharacterInventory(&characters[i], &showInventory, &showInventoryTimer, boxes, &lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
+					for (int i = 0; i < gameState.lenCharacters; i++) {
+						if (gameState.characters[i].isHuman) {
+							UpdatePlayerCharacter(&gameState.characters[i], &gameState.playerCamera, mouseSensitivity, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, gameState.pickups, gameState.lenPickups, &gameState.playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, basicLightingShader);
+							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
 						}
 						else {
-							UpdateNPC(&characters[i], playerCamera, gravity, boxes, lenBoxes, platforms, lenPlatforms, fxStep, fxLand);
+							UpdateNPC(&gameState.characters[i], gameState.playerCamera, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, fxStep, fxLand);
 						}
 					}
 
 					// Update some lights
-					UpdateLightValues(basicLightingShader, playerTeSpecial.flareLight);
+					UpdateLightValues(basicLightingShader, gameState.playerTeSpecial.flareLight);
 
 					// Update pickups
-					UpdatePickups(pickups, lenPickups, playerCamera, &pickupPulsePool, &pickupRespawnPool, basicLightingShader);
+					UpdatePickups(gameState.pickups, gameState.lenPickups, gameState.playerCamera, &pickupPulsePool, &pickupRespawnPool, basicLightingShader);
 				}
 
 				// Game Paused
@@ -658,7 +672,7 @@ int main(void) {
 								char *newSaveName = GetNewSaveFileName(&saveFiles);
 
 								if (newSaveName != NULL) {
-									if (SaveGameData(newSaveName, &characters[0], boxes, lenBoxes)) {
+									if (SaveGameData(newSaveName, &gameState.characters[0], gameState.boxes, gameState.lenBoxes)) {
 										TraceLog(LOG_INFO, "Game saved to %s.", newSaveName);
 										// TODO: We'll need to be able to update saveFiles and all the things dependant on it after creating a new save.
 									}
@@ -682,7 +696,7 @@ int main(void) {
 								fileButtons[i].position = (Vector2){ (screenWidth / 2) - (fileButtons[i].size.x / 2), (screenHeight / 2 - 90) + yOffset };
 								UpdateMenuButton(&fileButtons[i], fxUIHover, fxUIClick);
 								if (fileButtons[i].clicked) {
-									if (SaveGameData(saveFiles.paths[i], &characters[0], boxes, lenBoxes)) {
+									if (SaveGameData(saveFiles.paths[i], &gameState.characters[0], gameState.boxes, gameState.lenBoxes)) {
 										TraceLog(LOG_INFO, "Game saved to %s.", saveFiles.paths[i]);
 										fileButtons[i].clicked = false;
 										break;
@@ -702,7 +716,7 @@ int main(void) {
 				}
 
 				// Update shaders
-				float playerCameraPos[3] = { playerCamera.position.x, playerCamera.position.y, playerCamera.position.z };
+				float playerCameraPos[3] = { gameState.playerCamera.position.x, gameState.playerCamera.position.y, gameState.playerCamera.position.z };
 				SetShaderValue(basicLightingShader, basicLightingShader.locs[SHADER_LOC_VECTOR_VIEW], playerCameraPos, SHADER_UNIFORM_VEC3);
 
 			} break;
@@ -761,38 +775,38 @@ int main(void) {
 				BeginTextureMode(viewport);
 					ClearBackground(BLACK);
 
-					BeginMode3D(genericCamera);
+					BeginMode3D(gameState.genericCamera);
 
 						BeginShaderMode(basicLightingShader);
 
 							// Draw characters 
-							for (int i = 0; i < lenCharacters; i++) {
-								DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, characters[i].color);
-								DrawCubeWiresV(characters[i].position, characters[i].size, GREEN);
+							for (int i = 0; i < gameState.lenCharacters; i++) {
+								DrawModelEx(gameState.characters[i].model, gameState.characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(gameState.characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, gameState.characters[i].color);
+								DrawCubeWiresV(gameState.characters[i].position, gameState.characters[i].size, GREEN);
 							}
 
 							// Draw player inventory item
-							switch (characters[0].inventoryIndex) {
+							switch (gameState.characters[0].inventoryIndex) {
 								case INVENTORY_NOTHING: {
 									break;
 								}; break;
 								case INVENTORY_BUILD_TOOL: {
-									DrawItemBuildTool(playerCamera, boxModel, colors, selectedColorX, selectedColorY);
+									DrawItemBuildTool(gameState.playerCamera, boxModel, colors, selectedColorX, selectedColorY);
 								}; break;
 								case INVENTORY_TESPECIAL: {
-									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
+									DrawItemTeSpecial(&gameState.playerTeSpecial, gameState.playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
 								}; break;
 								default: break;
 							}
 
 							// Draw boxes
-							DrawBoxes(boxes, lenBoxes);
+							DrawBoxes(gameState.boxes, gameState.lenBoxes);
 
 							// Draw platforms
-							DrawPlatforms(platforms, lenPlatforms);
+							DrawPlatforms(gameState.platforms, gameState.lenPlatforms);
 
 							// Draw pickups
-							DrawPickups(pickups, lenPickups);
+							DrawPickups(gameState.pickups, gameState.lenPickups);
 
 						EndShaderMode();
 
@@ -808,38 +822,38 @@ int main(void) {
 				BeginDrawing();
 					ClearBackground(BLACK);
 
-					BeginMode3D(playerCamera);
+					BeginMode3D(gameState.playerCamera);
 
 						BeginShaderMode(basicLightingShader);
 	
 							// Draw boxes
-							DrawBoxes(boxes, lenBoxes);
+							DrawBoxes(gameState.boxes, gameState.lenBoxes);
 
 							// Draw platforms
-							DrawPlatforms(platforms, lenPlatforms);
+							DrawPlatforms(gameState.platforms, gameState.lenPlatforms);
 	
 							// Draw pickups
-							DrawPickups(pickups, lenPickups);
+							DrawPickups(gameState.pickups, gameState.lenPickups);
 
 							// Draw player inventory item
-							switch (characters[0].inventoryIndex) {
+							switch (gameState.characters[0].inventoryIndex) {
 								case INVENTORY_NOTHING: {
 									break;
 								}; break;
 								case INVENTORY_BUILD_TOOL: {
-									DrawItemBuildTool(playerCamera, boxModel, colors, selectedColorX, selectedColorY);
+									DrawItemBuildTool(gameState.playerCamera, boxModel, colors, selectedColorX, selectedColorY);
 								}; break;
 								case INVENTORY_TESPECIAL: {
-									DrawItemTeSpecial(&playerTeSpecial, playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
+									DrawItemTeSpecial(&gameState.playerTeSpecial, gameState.playerCamera, teSpecialModel, bigMuzzleFlareModel, littleMuzzleFlareModel);
 								}
 								default: break;
 							}
 
 							// Draw characters (Except for player.)
-							for (int i = 0; i < lenCharacters; i++) {
-								if (!characters[i].isHuman) {
-									DrawModelEx(characters[i].model, characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, characters[i].color);
-									DrawCubeWiresV(characters[i].position, characters[i].size, GREEN);
+							for (int i = 0; i < gameState.lenCharacters; i++) {
+								if (!gameState.characters[i].isHuman) {
+									DrawModelEx(gameState.characters[i].model, gameState.characters[i].position, (Vector3){ 0.0f, 1.0f, 0.0f }, -(gameState.characters[i].yaw * 180.0f / PI), (Vector3){ 1.1f, 1.1f, 1.1f }, gameState.characters[i].color);
+									DrawCubeWiresV(gameState.characters[i].position, gameState.characters[i].size, GREEN);
 								}
 							}
 
@@ -871,8 +885,8 @@ int main(void) {
 					// Inventory
 					if (showInventory) {
 						// Evaluate current item
-						const char* itemText = TextFormat("%d", characters[0].inventoryIndex);
-						switch (characters[0].inventoryIndex) {
+						const char* itemText = TextFormat("%d", gameState.characters[0].inventoryIndex);
+						switch (gameState.characters[0].inventoryIndex) {
 							case INVENTORY_NOTHING: itemText = "None"; break;
 							case INVENTORY_BUILD_TOOL: itemText = "Build Tool"; break;
 							case INVENTORY_TESPECIAL: itemText = ".38 Special"; break;
@@ -884,7 +898,7 @@ int main(void) {
 
 					// .38 Special ammunition
 					if (showTeSpecialHud) {
-						const char* ammoText = TextFormat("%d/%d", playerTeSpecial.roundsLoaded, playerTeSpecial.extraRounds);
+						const char* ammoText = TextFormat("%d/%d", gameState.playerTeSpecial.roundsLoaded, gameState.playerTeSpecial.extraRounds);
 						DrawText(ammoText, screenWidth - MeasureText(ammoText, 50) - (screenWidth / 100), screenHeight - 50, 50, RAYWHITE);
 					}
 
@@ -942,7 +956,7 @@ int main(void) {
 	UnloadModel(bigMuzzleFlareModel);
 	UnloadModel(teAmmoModel);
 
-	for (int i = 0; i < lenPlatforms; i++) UnloadModel(platforms[i].model);
+	for (int i = 0; i < gameState.lenPlatforms; i++) UnloadModel(gameState.platforms[i].model);
 
 	UnloadRenderTexture(viewport);
 

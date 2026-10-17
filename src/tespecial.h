@@ -8,10 +8,10 @@
 typedef struct Box Box;
 
 typedef struct TeSpecial {
-	const int loadCapacity;
+	int loadCapacity;
 	int roundsLoaded;
 	int extraRounds;
-	const int extraRoundsCapacity;
+	int extraRoundsCapacity;
 	float coolDownTimer;
 	int flareFrame;
 	Light flareLight;
