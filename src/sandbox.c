@@ -24,6 +24,7 @@ You can also try a gcc command like this:
 #include "buildtool.h"
 #include "pickup.h"
 #include "platform.h"
+#include "console.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -32,6 +33,16 @@ You can also try a gcc command like this:
 typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
 typedef enum MenuScreen { MAIN_MENU, LOAD_GAME } MenuScreen;
 typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
+
+// Console for trace log
+static Console *consoleForTraceLog;
+
+static void ConsoleTraceLogCallback(int logLevel, const char *text, va_list args) {
+	char message[CONSOLE_LOG_TEXT_SIZE];
+	vsnprintf(message, sizeof(message), text, args);
+
+	AddConsoleLog(consoleForTraceLog, logLevel, message);
+}
 
 void DrawFloor(int slicesX, int slicesZ, float spacing, float xMin, float zMin) {
 	// Draw lines parallel to X (vary Z)
@@ -60,6 +71,14 @@ int main(void) {
 
 	// Disable default raylib escape key functionality 
 	SetExitKey(KEY_NULL);
+
+	// Console
+	SetTraceLogLevel(LOG_ALL);
+	Console console = (Console){ 0 };
+	console.enabled = true;
+	console.visible = false;
+	consoleForTraceLog = &console;
+	SetTraceLogCallback(ConsoleTraceLogCallback);
 
 	// Shaders
 	Shader basicLightingShader = LoadShader("assets/shaders/lighting.vs", "assets/shaders/lighting.fs");
@@ -385,7 +404,7 @@ int main(void) {
 	Character characters [MAX_CHARACTERS];
 
 	// Player
-	characters[0] =  (Character){ 0 }; 
+	characters[0] = (Character){ 0 }; 
 	characters[0].size = (Vector3){ 0.90f, 1.90f, 0.90f };
 	characters[0].position = (Vector3){ 0.0f, 0.0f, 0.0f };
 	characters[0].isHuman = true;
@@ -480,6 +499,11 @@ int main(void) {
 			ToggleFullscreen();
 			screenWidth = GetScreenWidth();
 			screenHeight = GetScreenHeight();
+		}
+
+		// Toggle console
+		if (IsKeyPressed(KEY_GRAVE)) {
+			console.visible = !console.visible;
 		}
 
 		switch (screen) {
@@ -698,6 +722,9 @@ int main(void) {
 							DrawMenuButton(newGameButton);
 							DrawMenuButton(loadGameButton);
 							DrawMenuButton(quitGameButton);
+
+							// Draw console
+							if (console.enabled && console.visible) DrawConsole(console, screenWidth, screenHeight);
 						EndDrawing();
 					} break;
 
@@ -714,6 +741,9 @@ int main(void) {
 							}
 
 							DrawMenuButton(returnToMainButton);
+
+							// Draw console
+							if (console.enabled && console.visible) DrawConsole(console, screenWidth, screenHeight);
 						EndDrawing();
 					} break;
 
@@ -885,6 +915,9 @@ int main(void) {
 							default: break;
 						}
 					}
+
+					// Draw console
+					if (console.enabled && console.visible) DrawConsole(console, screenWidth, screenHeight);
 				EndDrawing();
 			} break;
 
