@@ -17,6 +17,10 @@ void AddConsoleLog(Console *console, int level, const char *text) {
 	snprintf(entry->text, sizeof(entry->text), "%s", text);
 }
 
+void ExecuteCommand(char *command) {
+	TraceLog(LOG_INFO, "You ran %s", command);
+}
+
 void UpdateConsole(Console *console) {
 	// Get user input
 	int key = GetCharPressed();
@@ -41,6 +45,15 @@ void UpdateConsole(Console *console) {
 		console->lenCommand = 0;
 		console->command[console->lenCommand] = '\0';
 	}
+
+	if (IsKeyPressed(KEY_ENTER)) {
+		ExecuteCommand(console->command);
+		console->lenCommand = 0;
+		console->command[console->lenCommand] = '\0';
+	}
+
+	// Update cursor timer
+	console->cursorTimer++;
 }
 
 void DrawConsole(Console console, int screenWidth, int screenHeight) {
@@ -74,4 +87,9 @@ void DrawConsole(Console console, int screenWidth, int screenHeight) {
 
 	// Draw input area.
 	DrawText(console.command, 10, y, 16, RAYWHITE);
+
+	// Draw cursor
+	if (console.lenCommand < CONSOLE_COMMAND_LENGTH) {
+		if ((console.cursorTimer / 20) % 2 == 0) DrawText("_", 10 + MeasureText(console.command, 16), y, 16, RAYWHITE);
+	}
 }

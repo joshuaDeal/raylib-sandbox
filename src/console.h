@@ -19,6 +19,7 @@ typedef struct Console {
 	int lenLog;
 	char command[CONSOLE_COMMAND_LENGTH + 1];
 	int lenCommand;
+	int cursorTimer;
 } Console;
 
 void AddConsoleLog(Console *console, int level, const char *text);
