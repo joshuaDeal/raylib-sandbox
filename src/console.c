@@ -59,11 +59,18 @@ void cmdGravity(Console *console, GameState *gameState, int lenArgs, char *args[
 	(void)console;
 	(void)lenArgs;
 
+	// Make sure we have an argument
+	if (args[0] == NULL) {
+		TraceLog(LOG_ERROR, "No argument for gravity provided.");
+		TraceLog(LOG_ERROR, "Gravity usage: `gravity <floating point value>`");
+		return;
+	}
+
 	char *endptr;
 	float value = strtof(args[0], &endptr);
 
 	if (endptr == args[0]) {
-		TraceLog(LOG_ERROR, "%s could not be converted into a vaild floating point number.", args[0]);
+		TraceLog(LOG_ERROR, "%s could not be converted into a valid floating point number.", args[0]);
 		return;
 	}
 
