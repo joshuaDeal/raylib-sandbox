@@ -7,6 +7,8 @@
 
 #include <raylib.h>
 
+typedef struct GameState GameState;
+
 typedef struct ConsoleLogEntry {
 	int level;
 	char text[CONSOLE_LOG_TEXT_SIZE];
@@ -24,7 +26,7 @@ typedef struct Console {
 
 void AddConsoleLog(Console *console, int level, const char *text);
 
-void UpdateConsole(Console *console);
+void UpdateConsole(Console *console, GameState *gameState);
 
 void DrawConsole(Console console, int screenWidth, int screenHeight);
 

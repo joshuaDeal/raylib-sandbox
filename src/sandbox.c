@@ -25,6 +25,7 @@ You can also try a gcc command like this:
 #include "pickup.h"
 #include "platform.h"
 #include "console.h"
+#include "gamestate.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -33,21 +34,6 @@ You can also try a gcc command like this:
 typedef enum GameScreen { MENU, GAMEPLAY } GameScreen;
 typedef enum MenuScreen { MAIN_MENU, LOAD_GAME } MenuScreen;
 typedef enum PauseScreen { MAIN_PAUSE_MENU, SAVE_GAME } PauseScreen;
-
-typedef struct GameState {
-	Camera3D genericCamera;
-	Camera3D playerCamera;
-	int lenCharacters;
-	Character characters[MAX_CHARACTERS];
-	TeSpecial playerTeSpecial;
-	int lenBoxes;
-	Box boxes[MAX_BOXES];
-	int lenPlatforms;
-	Platform platforms[MAX_PLATFORMS];
-	Pickup pickups[MAX_PICKUPS];
-	int lenPickups;
-	float gravity;
-} GameState;
 
 // Console for trace log
 static Console *consoleForTraceLog;
@@ -521,7 +507,7 @@ int main(void) {
 		}
 
 		if (console.visible && console.enabled) {
-			UpdateConsole(&console);
+			UpdateConsole(&console, &gameState);
 			gameState.characters[0].isHuman = false;
 		} else gameState.characters[0].isHuman = true;
 

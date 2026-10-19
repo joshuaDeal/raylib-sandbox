@@ -3,8 +3,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "gamestate.h"
 
-typedef void (*CommandFn)(Console *console, int lenArgs, char *args[]);
+typedef void (*CommandFn)(Console *console, GameState *gameState, int lenArgs, char *args[]);
 
 typedef struct Command {
 	const char *name;
@@ -12,17 +13,19 @@ typedef struct Command {
 	const char *help;
 } Command;
 
-void cmdHelp(Console *console, int lenArgs, char *args[]);
+void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]);
 
-void cmdClear(Console *console, int lenArgs, char *args[]) {
+void cmdClear(Console *console, GameState *gameState, int lenArgs, char *args[]) {
 	(void)lenArgs;
 	(void)args;
+	(void)gameState;
 
 	if (console != NULL) console->lenLog = 0;
 }
 
-void cmdEcho(Console *console, int lenArgs, char *args[]) {
+void cmdEcho(Console *console, GameState *gameState, int lenArgs, char *args[]) {
 	(void)console;
+	(void)gameState;
 
 	size_t size = 1;
 
@@ -52,15 +55,32 @@ void cmdEcho(Console *console, int lenArgs, char *args[]) {
 	free(result);
 }
 
+void cmdGravity(Console *console, GameState *gameState, int lenArgs, char *args[]) {
+	(void)console;
+	(void)lenArgs;
+
+	char *endptr;
+	float value = strtof(args[0], &endptr);
+
+	if (endptr == args[0]) {
+		TraceLog(LOG_ERROR, "%s could not be converted into a vaild floating point number.", args[0]);
+		return;
+	}
+
+	gameState->gravity = value;
+}
+
 static const Command commands[] = {
 	{ "help",  cmdHelp,  "List available commands" },
 	{ "clear", cmdClear, "Clear the console" },
 	{ "echo",  cmdEcho,  "Print text" },
+	{ "gravity",  cmdGravity,  "Set gravity value" },
 };
 
-void cmdHelp(Console *console, int lenArgs, char *args[]) {
+void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) {
 	(void)console;
 	(void)lenArgs;
+	(void)gameState;
 
 	if (args[0] == NULL) {
 		TraceLog(LOG_INFO, "Welecome to the Josh's Raylib Sandbox console!");
@@ -104,7 +124,7 @@ void AddConsoleLog(Console *console, int level, const char *text) {
 	snprintf(entry->text, sizeof(entry->text), "%s", text);
 }
 
-void ExecuteCommand(Console *console) {
+void ExecuteCommand(Console *console, GameState *gameState) {
 	char *input = console->command;
 
 	// Trace out the input so it appears in the log
@@ -135,7 +155,7 @@ void ExecuteCommand(Console *console) {
 	for (size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++) {
 		if (strcmp(command, commands[i].name) == 0) {
 			found = true;
-			commands[i].fn(console, lenArgs, args);
+			commands[i].fn(console, gameState, lenArgs, args);
 			break;
 		}
 	}
@@ -145,7 +165,7 @@ void ExecuteCommand(Console *console) {
 	}
 }
 
-void UpdateConsole(Console *console) {
+void UpdateConsole(Console *console, GameState *gameState) {
 	// Get user input
 	int key = GetCharPressed();
 
@@ -171,7 +191,7 @@ void UpdateConsole(Console *console) {
 	}
 
 	if (IsKeyPressed(KEY_ENTER)) {
-		ExecuteCommand(console);
+		ExecuteCommand(console, gameState);
 		console->lenCommand = 0;
 		console->command[console->lenCommand] = '\0';
 	}
