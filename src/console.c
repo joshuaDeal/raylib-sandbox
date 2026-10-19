@@ -2,6 +2,93 @@
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+typedef void (*CommandFn)(Console *console, int lenArgs, char *args[]);
+
+typedef struct Command {
+	const char *name;
+	CommandFn fn;
+	const char *help;
+} Command;
+
+void cmdHelp(Console *console, int lenArgs, char *args[]);
+
+void cmdClear(Console *console, int lenArgs, char *args[]) {
+	(void)lenArgs;
+	(void)args;
+
+	if (console != NULL) console->lenLog = 0;
+}
+
+void cmdEcho(Console *console, int lenArgs, char *args[]) {
+	(void)console;
+
+	size_t size = 1;
+
+	for (int i = 0; i < lenArgs; ++i) {
+		size += strlen(args[i]);
+		if (i > 0) ++size;
+	}
+
+	char *result = malloc(size);
+	if (result == NULL)
+		return;
+
+	char *p = result;
+
+	for (int i = 0; i < lenArgs; ++i) {
+		if (i > 0) *p++ = ' ';
+
+		size_t len = strlen(args[i]);
+		memcpy(p, args[i], len);
+		p += len;
+	}
+
+	*p = '\0';
+
+	TraceLog(LOG_INFO, "%s", result);
+
+	free(result);
+}
+
+static const Command commands[] = {
+	{ "help",  cmdHelp,  "List available commands" },
+	{ "clear", cmdClear, "Clear the console" },
+	{ "echo",  cmdEcho,  "Print text" },
+};
+
+void cmdHelp(Console *console, int lenArgs, char *args[]) {
+	(void)console;
+	(void)lenArgs;
+
+	if (args[0] == NULL) {
+		TraceLog(LOG_INFO, "Welecome to the Josh's Raylib Sandbox console!");
+		TraceLog(LOG_INFO, "If you're reading this text right now, that means you're probably pretty cool!");
+		TraceLog(LOG_INFO, "The console is a command line interface of sorts. Here you can type in commands. Commands will usually trigger some sort of action if typed correctly.");
+		TraceLog(LOG_INFO, "Use the \'`\' key to open and close this console.");
+		TraceLog(LOG_INFO, "Here is a list of commands and what they do:");
+
+		for (size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++) {
+			TraceLog(LOG_INFO, "%s -- %s", commands[i].name, commands[i].help);
+		}
+
+		return;
+	}
+
+	bool validCommand = false;
+	for (size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++) {
+		if (strcmp(args[0], commands[i].name) == 0) {
+			validCommand = true;
+			TraceLog(LOG_INFO, "%s", commands[i].help);
+			break;
+		}
+	}
+
+	if (!validCommand) {
+			TraceLog(LOG_ERROR, "help could not find a command called \"%s\".", args[0]);
+	}
+}
 
 void AddConsoleLog(Console *console, int level, const char *text) {
 	if (console == NULL || text == NULL) return;
@@ -17,8 +104,45 @@ void AddConsoleLog(Console *console, int level, const char *text) {
 	snprintf(entry->text, sizeof(entry->text), "%s", text);
 }
 
-void ExecuteCommand(char *command) {
-	TraceLog(LOG_INFO, "You ran %s", command);
+void ExecuteCommand(Console *console) {
+	char *input = console->command;
+
+	// Trace out the input so it appears in the log
+	TraceLog(LOG_INFO, "%s", input);
+
+	// Parse the command
+	char *command;
+	int lenArgs = 0;
+	command = strtok(input, " ");
+	
+	if (command == NULL) {
+		return;
+	}
+
+	char *args[32];
+	char *arg;
+	while ((arg = strtok(NULL, " ")) != NULL) {
+		if (lenArgs < 32) {
+			args[lenArgs++] = arg;
+		} else {
+			TraceLog(LOG_ERROR, "Too many arguments.");
+			return;
+		}
+	}
+
+	// Run the command
+	bool found = false;
+	for (size_t i = 0; i < (sizeof(commands) / sizeof(commands[0])); i++) {
+		if (strcmp(command, commands[i].name) == 0) {
+			found = true;
+			commands[i].fn(console, lenArgs, args);
+			break;
+		}
+	}
+
+	if (!found) {
+		TraceLog(LOG_ERROR, "Command \"%s\" not found.", command);
+	}
 }
 
 void UpdateConsole(Console *console) {
@@ -47,7 +171,7 @@ void UpdateConsole(Console *console) {
 	}
 
 	if (IsKeyPressed(KEY_ENTER)) {
-		ExecuteCommand(console->command);
+		ExecuteCommand(console);
 		console->lenCommand = 0;
 		console->command[console->lenCommand] = '\0';
 	}
