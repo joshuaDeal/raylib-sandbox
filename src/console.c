@@ -190,7 +190,6 @@ static const Command commands[] = {
 
 void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) {
 	(void)console;
-	(void)lenArgs;
 	(void)gameState;
 
 	if (lenArgs < 1) {
