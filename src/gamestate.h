@@ -13,6 +13,7 @@ typedef struct GameState {
 	Camera3D playerCamera;
 	int lenCharacters;
 	Character characters[MAX_CHARACTERS];
+	Model playerModel;
 	TeSpecial playerTeSpecial;
 	int lenBoxes;
 	Box boxes[MAX_BOXES];
@@ -20,6 +21,9 @@ typedef struct GameState {
 	Platform platforms[MAX_PLATFORMS];
 	Pickup pickups[MAX_PICKUPS];
 	int lenPickups;
+	Model teAmmoModel;
+	Model donutModel;
+	Shader basicLightingShader;
 	float gravity;
 } GameState;
 

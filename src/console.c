@@ -1,9 +1,10 @@
 #include "console.h"
+#include "gamestate.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "gamestate.h"
+#include <raymath.h>
 
 typedef void (*CommandFn)(Console *console, GameState *gameState, int lenArgs, char *args[]);
 
@@ -77,11 +78,115 @@ void cmdGravity(Console *console, GameState *gameState, int lenArgs, char *args[
 	gameState->gravity = value;
 }
 
+void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[]) {
+	(void)console;
+
+	// Make sure we have an argument
+	if (lenArgs < 1) {
+		TraceLog(LOG_ERROR, "No argument for spawn provided.");
+		TraceLog(LOG_ERROR, "Spawn usage: `spawn <type> <sub-type> <x position> <y position> <z position>`");
+		return;
+	}
+
+	// Pickups
+	if (strcmp(args[0], "pickup") == 0 && gameState->lenPickups < MAX_PICKUPS) {
+		// Make sure we have a sub-type
+		if (lenArgs < 2) {
+			TraceLog(LOG_ERROR, "No sub-type argument for spawn pickup provided.");
+			TraceLog(LOG_ERROR, "Spawn pickup usage: `spawn pickup <sub-type> <x position> <y position> <z position>`");
+			return;
+		}
+
+		// Evaluate position
+		Vector3 position = Vector3Add(gameState->playerCamera.position, (Vector3){ 1.0, 0.0, 0.0 });
+
+		if (lenArgs > 2) {
+			// Check that all positional values are provided
+			if (lenArgs < 5) {
+				TraceLog(LOG_ERROR, "Missing positional argument.");
+				return;
+			}
+
+			float values[3];
+			for (int i = 2, j = 0; i < 5; i++, j++) {
+				// Try and convert to float
+				char *endptr;
+				values[j] = strtof(args[i], &endptr);
+		
+				if (endptr == args[i]) {
+					TraceLog(LOG_ERROR, "%s could not be converted into a valid floating point number.", args[i]);
+					return;
+				}
+			}
+
+			position = (Vector3){ values[0], values[1], values[2] };
+		}
+
+		if (strcmp(args[1], "teAmmo") == 0) {
+			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+			gameState->pickups[gameState->lenPickups].light = CreateLight(LIGHT_POINT, gameState->pickups[gameState->lenPickups].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, gameState->basicLightingShader);
+			gameState->lenPickups++;
+		}
+		else if (strcmp(args[1], "donut") == 0) {
+			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+			gameState->pickups[gameState->lenPickups].light = CreateLight(LIGHT_POINT, gameState->pickups[gameState->lenPickups].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, gameState->basicLightingShader);
+			gameState->lenPickups++;
+		}
+	}
+
+	// NPCs 
+	if (strcmp(args[0], "npc") == 0 && gameState->lenCharacters < MAX_CHARACTERS) {
+		// Evaluate position
+		Vector3 position = Vector3Add(gameState->playerCamera.position, (Vector3){ 1.0, 0.0, 0.0 });
+
+		if (lenArgs > 1) {
+			// Check that all positional values are provided
+			if (lenArgs < 4) {
+				TraceLog(LOG_ERROR, "Missing positional argument.");
+				return;
+			}
+
+			float values[3];
+			for (int i = 1, j = 0; i < 4; i++, j++) {
+				// Try and convert to float
+				char *endptr;
+				values[j] = strtof(args[i], &endptr);
+		
+				if (endptr == args[i]) {
+					TraceLog(LOG_ERROR, "%s could not be converted into a valid floating point number.", args[i]);
+					return;
+				}
+			}
+
+			position = (Vector3){ values[0], values[1], values[2] };
+		}
+
+		gameState->characters[gameState->lenCharacters] = (Character){ 0 };
+		gameState->characters[gameState->lenCharacters].size = (Vector3){ 0.90f, 1.90f, 0.90f };
+		gameState->characters[gameState->lenCharacters].position = position;
+		gameState->characters[gameState->lenCharacters].isHuman = false;
+		gameState->characters[gameState->lenCharacters].speed = PLAYER_SPEED;
+		gameState->characters[gameState->lenCharacters].jumpForce = PLAYER_JUMP_FORCE;
+		gameState->characters[gameState->lenCharacters].yaw = 3.14f;
+		gameState->characters[gameState->lenCharacters].pitch = 0.0f;
+		gameState->characters[gameState->lenCharacters].model = gameState->playerModel;
+		gameState->characters[gameState->lenCharacters].footstepTimer = 0.0f;
+		gameState->characters[gameState->lenCharacters].jumpBoost = false;
+		gameState->characters[gameState->lenCharacters].landFlag = false;
+		for (int i = 0; i < NUM_INVENTORY_ITEMS; i++) gameState->characters[gameState->lenCharacters].inventory[i] = false;
+		gameState->characters[gameState->lenCharacters].inventoryIndex = 0;
+		gameState->characters[gameState->lenCharacters].health = 100.0f;
+		gameState->characters[gameState->lenCharacters].color = BLUE;
+		gameState->lenCharacters++;
+	}
+}
+
 static const Command commands[] = {
 	{ "help",  cmdHelp,  "List available commands" },
 	{ "clear", cmdClear, "Clear the console" },
 	{ "echo",  cmdEcho,  "Print text" },
 	{ "gravity",  cmdGravity,  "Set gravity value" },
+	{ "spawn",  cmdSpawn,  "Spawn something" },
 };
 
 void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) {
