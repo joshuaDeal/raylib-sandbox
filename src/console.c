@@ -58,10 +58,9 @@ void cmdEcho(Console *console, GameState *gameState, int lenArgs, char *args[]) 
 
 void cmdGravity(Console *console, GameState *gameState, int lenArgs, char *args[]) {
 	(void)console;
-	(void)lenArgs;
 
 	// Make sure we have an argument
-	if (args[0] == NULL) {
+	if (lenArgs < 1) {
 		TraceLog(LOG_ERROR, "No argument for gravity provided.");
 		TraceLog(LOG_ERROR, "Gravity usage: `gravity <floating point value>`");
 		return;
@@ -194,7 +193,7 @@ void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) 
 	(void)lenArgs;
 	(void)gameState;
 
-	if (args[0] == NULL) {
+	if (lenArgs < 1) {
 		TraceLog(LOG_INFO, "Welecome to the Josh's Raylib Sandbox console!");
 		TraceLog(LOG_INFO, "If you're reading this text right now, that means you're probably pretty cool!");
 		TraceLog(LOG_INFO, "The console is a command line interface of sorts. Here you can type in commands. Commands will usually trigger some sort of action if typed correctly.");
