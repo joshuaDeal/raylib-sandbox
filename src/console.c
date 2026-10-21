@@ -1,5 +1,6 @@
 #include "console.h"
 #include "gamestate.h"
+#include "platform.h"
 #include <stddef.h>
 #include <string.h>
 #include <stdio.h>
@@ -199,6 +200,111 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		gameState->characters[gameState->lenCharacters].health = 100.0f;
 		gameState->characters[gameState->lenCharacters].color = BLUE;
 		gameState->lenCharacters++;
+	}
+
+	if (strcmp(args[0], "platform") == 0 && gameState->lenPlatforms < MAX_PLATFORMS) {
+		validObject = true;
+
+		// Evaluate color.
+		// TODO: I should probably be using rgba.
+		Color color = GREEN;
+		if (lenArgs > 1) {
+			if (strcmp(args[1], "LIGHTGRAY") == 0) color = LIGHTGRAY;
+			else if (strcmp(args[1], "GRAY") == 0) color = GRAY;
+			else if (strcmp(args[1], "DARKGRAY") == 0) color = DARKGRAY;
+			else if (strcmp(args[1], "YELLOW") == 0) color = YELLOW;
+			else if (strcmp(args[1], "GOLD") == 0) color = GOLD;
+			else if (strcmp(args[1], "ORANGE") == 0) color = ORANGE;
+			else if (strcmp(args[1], "PINK") == 0) color = PINK;
+			else if (strcmp(args[1], "RED") == 0) color = RED;
+			else if (strcmp(args[1], "MAROON") == 0) color = MAROON;
+			else if (strcmp(args[1], "GREEN") == 0) color = GREEN;
+			else if (strcmp(args[1], "LIME") == 0) color = LIME;
+			else if (strcmp(args[1], "DARKGREEN") == 0) color = DARKGREEN;
+			else if (strcmp(args[1], "SKYBLUE") == 0) color = SKYBLUE;
+			else if (strcmp(args[1], "BLUE") == 0) color = BLUE;
+			else if (strcmp(args[1], "DARKBLUE") == 0) color = DARKBLUE;
+			else if (strcmp(args[1], "PURPLE") == 0) color = PURPLE;
+			else if (strcmp(args[1], "VIOLET") == 0) color = VIOLET;
+			else if (strcmp(args[1], "DARKPURPLE") == 0) color = DARKPURPLE;
+			else if (strcmp(args[1], "BEIGE") == 0) color = BEIGE;
+			else if (strcmp(args[1], "BROWN") == 0) color = BROWN;
+			else if (strcmp(args[1], "DARKBROWN") == 0) color = DARKBROWN;
+			else if (strcmp(args[1], "WHITE") == 0) color = WHITE;
+			else if (strcmp(args[1], "BLACK") == 0) color = BLACK;
+			else if (strcmp(args[1], "MAGENTA") == 0) color = MAGENTA;
+			else if (strcmp(args[1], "RAYWHITE") == 0) color = RAYWHITE;
+			else {
+				TraceLog(LOG_ERROR, "%s is not a valid color.", args[1]);
+				return;
+			}
+		}
+
+		// Evaluate solid
+		bool solid = true;
+		if (lenArgs > 2) {
+			if (strcmp(args[2], "false") == 0) {
+				solid = false;
+			} else if (strcmp(args[2], "true") != 0) {
+				TraceLog(LOG_ERROR, "%s should be 'true' or 'false'.", args[2]);
+				return;
+			}
+		}
+
+		// Evaluate size 
+		Vector3 size = (Vector3){ 1.0f, 0.5f, 1.0f };
+		if (lenArgs > 4) {
+			// Check that all positional values are provided
+			if (lenArgs < 5) {
+				TraceLog(LOG_ERROR, "Missing size argument.");
+				TraceLog(LOG_ERROR, "Spawn platform usage: `spawn platform <color> <is solid (true or false)> <x size> <y size> <z size> <x position> <y position> <z position>`");
+				return;
+			}
+
+			float values[3];
+			for (int i = 3, j = 0; i < 6; i++, j++) {
+				// Try and convert to float
+				char *endptr;
+				values[j] = strtof(args[i], &endptr);
+		
+				if (endptr == args[i]) {
+					TraceLog(LOG_ERROR, "%s could not be converted into a valid floating point number.", args[i]);
+					return;
+				}
+			}
+
+			size = (Vector3){ values[0], values[1], values[2] };
+		}
+
+		// Evaluate position
+		Vector3 position = Vector3Add(gameState->playerCamera.position, (Vector3){ 1.0, 0.0, 0.0 });
+		if (lenArgs > 6) {
+			// Check that all positional values are provided
+			if (lenArgs < 8) {
+				TraceLog(LOG_ERROR, "Missing positional argument.");
+				TraceLog(LOG_ERROR, "Spawn platform usage: `spawn platform <color> <is solid (true or false)> <x size> <y size> <z size> <x position> <y position> <z position>`");
+				return;
+			}
+
+			float values[3];
+			for (int i = 6, j = 0; i < 8; i++, j++) {
+				// Try and convert to float
+				char *endptr;
+				values[j] = strtof(args[i], &endptr);
+		
+				if (endptr == args[i]) {
+					TraceLog(LOG_ERROR, "%s could not be converted into a valid floating point number.", args[i]);
+					return;
+				}
+			}
+
+			position = (Vector3){ values[0], values[1], values[2] };
+		}
+
+		// Spawn platform
+		gameState->platforms[gameState->lenPlatforms] = (Platform){ .position = position, .size = size, .color = color, .solid = solid };
+		gameState->platforms[gameState->lenPlatforms].model = CreatePlatformModel(gameState->platforms[gameState->lenPlatforms].size, gameState->basicLightingShader);
+		gameState->lenPlatforms++;
 	}
 
 	if (!validObject) {
