@@ -87,8 +87,12 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		return;
 	}
 
+	bool validObject = false;
+
 	// Pickups
 	if (strcmp(args[0], "pickup") == 0 && gameState->lenPickups < MAX_PICKUPS) {
+		validObject = true;
+
 		// Make sure we have a sub-type
 		if (lenArgs < 2) {
 			TraceLog(LOG_ERROR, "No sub-type argument for spawn pickup provided.");
@@ -143,10 +147,16 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 			gameState->pickups[gameState->lenPickups].light = CreateLight(LIGHT_POINT, gameState->pickups[gameState->lenPickups].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, gameState->basicLightingShader);
 			gameState->lenPickups++;
 		}
+		else {
+			TraceLog(LOG_ERROR, "pickup named '%s' not found.", args[1]);
+			return;
+		}
 	}
 
 	// NPCs 
 	if (strcmp(args[0], "npc") == 0 && gameState->lenCharacters < MAX_CHARACTERS) {
+		validObject = true;
+
 		// Evaluate position
 		Vector3 position = Vector3Add(gameState->playerCamera.position, (Vector3){ 1.0, 0.0, 0.0 });
 
@@ -189,6 +199,11 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		gameState->characters[gameState->lenCharacters].health = 100.0f;
 		gameState->characters[gameState->lenCharacters].color = BLUE;
 		gameState->lenCharacters++;
+	}
+
+	if (!validObject) {
+		TraceLog(LOG_ERROR, "%s not spawnable.", args[0]);
+		return;
 	}
 }
 
