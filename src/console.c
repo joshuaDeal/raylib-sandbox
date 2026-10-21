@@ -83,7 +83,7 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 	// Make sure we have an argument
 	if (lenArgs < 1) {
 		TraceLog(LOG_ERROR, "No argument for spawn provided.");
-		TraceLog(LOG_ERROR, "Spawn usage: `spawn <type> <sub-type> <x position> <y position> <z position>`");
+		TraceLog(LOG_ERROR, "Spawn usage: `spawn <type> <sub-type> <option> <x position> <y position> <z position>`");
 		return;
 	}
 
@@ -92,22 +92,23 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		// Make sure we have a sub-type
 		if (lenArgs < 2) {
 			TraceLog(LOG_ERROR, "No sub-type argument for spawn pickup provided.");
-			TraceLog(LOG_ERROR, "Spawn pickup usage: `spawn pickup <sub-type> <x position> <y position> <z position>`");
+			TraceLog(LOG_ERROR, "Spawn pickup usage: `spawn pickup <sub-type> <can respawn (true or false)> <x position> <y position> <z position>`");
 			return;
 		}
 
 		// Evaluate position
 		Vector3 position = Vector3Add(gameState->playerCamera.position, (Vector3){ 1.0, 0.0, 0.0 });
 
-		if (lenArgs > 2) {
+		if (lenArgs > 3) {
 			// Check that all positional values are provided
-			if (lenArgs < 5) {
-				TraceLog(LOG_ERROR, "Missing positional argument.");
+			if (lenArgs < 6) {
+				TraceLog(LOG_ERROR, "Missing an argument.");
+				TraceLog(LOG_ERROR, "Spawn pickup usage: `spawn pickup <sub-type> <can respawn (true or false)> <x position> <y position> <z position>`");
 				return;
 			}
 
 			float values[3];
-			for (int i = 2, j = 0; i < 5; i++, j++) {
+			for (int i = 3, j = 0; i < 6; i++, j++) {
 				// Try and convert to float
 				char *endptr;
 				values[j] = strtof(args[i], &endptr);
@@ -121,13 +122,24 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 			position = (Vector3){ values[0], values[1], values[2] };
 		}
 
+		// Toggle if pickup can respawn.
+		bool canRespawn = true;
+		if (lenArgs > 2) {
+			if (strcmp(args[2], "false") == 0) {
+				canRespawn = false;
+			} else if (strcmp(args[2], "true") != 0) {
+				TraceLog(LOG_ERROR, "%s should be 'true' or 'false'.", args[2]);
+				return;
+			}
+		}
+
 		if (strcmp(args[1], "teAmmo") == 0) {
-			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = TESPECIAL_AMMO, .canRespawn = canRespawn, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->teAmmoModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
 			gameState->pickups[gameState->lenPickups].light = CreateLight(LIGHT_POINT, gameState->pickups[gameState->lenPickups].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, gameState->basicLightingShader);
 			gameState->lenPickups++;
 		}
 		else if (strcmp(args[1], "donut") == 0) {
-			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = DONUT, .canRespawn = true, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
+			gameState->pickups[gameState->lenPickups] = (Pickup){ .type = DONUT, .canRespawn = canRespawn, .respawnTime = 40.0f, .respawnTimer = 0.0f, .enabled = true, .position = position, .size = (Vector3){ 0.5f, 0.5f, 0.5f }, .model = gameState->donutModel, .spin = 0.0f, .spinSpeed = 1.0f, .targetY = position.y, .bounceUp = true, .bounceTime = 0.0f, .bounceDuration = 1.0f };
 			gameState->pickups[gameState->lenPickups].light = CreateLight(LIGHT_POINT, gameState->pickups[gameState->lenPickups].position, Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.3f, gameState->basicLightingShader);
 			gameState->lenPickups++;
 		}
