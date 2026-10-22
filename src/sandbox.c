@@ -424,6 +424,7 @@ int main(void) {
 	gameState.characters[0].inventoryIndex = 0;
 	gameState.characters[0].health = 100.0f;
 	gameState.characters[0].color = RED;
+	gameState.characters[0].noclip = false;
 
 	// NPC
 	gameState.characters[1] = (Character){ 0 }; 
@@ -443,6 +444,7 @@ int main(void) {
 	gameState.characters[1].inventoryIndex = 0;
 	gameState.characters[1].health = 100.0f;
 	gameState.characters[1].color = BLUE;
+	gameState.characters[1].noclip = false;
 
 	// Create player weapons
 	gameState.playerTeSpecial = (TeSpecial){6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, gameState.basicLightingShader)};

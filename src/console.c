@@ -395,6 +395,25 @@ void cmdDelete(Console *console, GameState *gameState, int lenArgs, char *args[]
 	}
 }
 
+void cmdNoclip(Console *console, GameState *gameState, int lenArgs, char *args[]) {
+	(void)console;
+	(void)args;
+
+	// Make sure we don't have any arguments
+	if (lenArgs < 0) {
+		TraceLog(LOG_ERROR, "Noclip doesn't need any arguments.");
+		return;
+	}
+
+	// Find the player
+	for (int i = 0; i < gameState->lenCharacters; i++) {
+		if (gameState->characters[i].isPlayer) {
+			// Toggle noclip
+			gameState->characters[i].noclip = !gameState->characters[i].noclip;
+		}
+	}
+}
+
 static const Command commands[] = {
 	{ "help",  cmdHelp,  "List available commands" },
 	{ "clear", cmdClear, "Clear the console" },
@@ -402,6 +421,7 @@ static const Command commands[] = {
 	{ "gravity",  cmdGravity,  "Set gravity value" },
 	{ "spawn",  cmdSpawn,  "Spawn something" },
 	{ "delete",  cmdDelete,  "Delete something" },
+	{ "noclip",  cmdNoclip,  "Toggle noclip mode" },
 };
 
 void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) {

@@ -61,6 +61,7 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 
 	character->delta.x = 0.0f;
 	character->delta.z = 0.0f;
+	character->delta.y = 0.0f;
 
 	// Movement
 	// ------------------------------------------
@@ -109,18 +110,24 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 	}
 
 	// Gravity
-	if (!character->onGround) {
+	if (!character->onGround && !character->noclip) {
 		character->velocity.y -= gravity * delta;
 	}
 
+	if (character->noclip) character->velocity.y = 0.0f;
+
 	if (character->isHuman) {
 		// Jump
-		if (IsKeyPressed(KEY_SPACE) && character->onGround) {
+		if (IsKeyPressed(KEY_SPACE) && character->onGround && !character->noclip) {
 			character->velocity.y = character->jumpForce;
 			character->onGround = false;
 			character->jumpBoost = true;
 			character->landFlag = true;
 			PlayPositionalSound(jumpSound, *camera, (Vector3){ character->position.x, character->position.y - character->size.y, character->position.z }, 7.0f, 1.0f);
+		}
+		else if (character->noclip) {
+			if (IsKeyDown(KEY_SPACE)) character->velocity.y = character->speed;
+			if (IsKeyDown(KEY_LEFT_CONTROL)) character->velocity.y = -character->speed;
 		}
 	}
 
@@ -133,41 +140,44 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 	// Move x
 	character->position.x += character->velocity.x * delta;
 
-	// X collision with boxes
-	for (int o = 0; o < lenBoxes; o++) {
-		if (character->position.y - character->size.y / 2.0f < boxes[o].position.y + boxes[o].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f + COLLISION_EPSILON) {
-			if (character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f && character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f) {
-				if (character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f && character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f) {
-					if (character->velocity.x > 0.0f) {
-						character->position.x = boxes[o].position.x - boxes[o].size.x / 2.0f - character->size.x / 2.0f;
-		
-						character->velocity.x = 0.0f;
-					}
-					else if (character->velocity.x < 0.0f) {
-						character->position.x = boxes[o].position.x + boxes[o].size.x / 2.0f + character->size.x / 2.0f;
-		
-						character->velocity.x = 0.0f;
-					}
-				}
-			}
-		}
-	}
-
-	// X collision with platforms 
-	for (int i = 0; i < lenPlatforms; i++) {
-		if (platforms[i].solid) {
-			if (character->position.y - character->size.y / 2.0f < platforms[i].position.y + platforms[i].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f + COLLISION_EPSILON) {
-				if (character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f && character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f) {
-					if (character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f && character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f) {
+	// X collisions
+	if (!character->noclip) {
+		// X collision with boxes
+		for (int o = 0; o < lenBoxes; o++) {
+			if (character->position.y - character->size.y / 2.0f < boxes[o].position.y + boxes[o].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f + COLLISION_EPSILON) {
+				if (character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f && character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f) {
+					if (character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f && character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f) {
 						if (character->velocity.x > 0.0f) {
-							character->position.x = platforms[i].position.x - platforms[i].size.x / 2.0f - character->size.x / 2.0f;
+							character->position.x = boxes[o].position.x - boxes[o].size.x / 2.0f - character->size.x / 2.0f;
 			
 							character->velocity.x = 0.0f;
 						}
 						else if (character->velocity.x < 0.0f) {
-							character->position.x = platforms[i].position.x + platforms[i].size.x / 2.0f + character->size.x / 2.0f;
+							character->position.x = boxes[o].position.x + boxes[o].size.x / 2.0f + character->size.x / 2.0f;
 			
 							character->velocity.x = 0.0f;
+						}
+					}
+				}
+			}
+		}
+	
+		// X collision with platforms 
+		for (int i = 0; i < lenPlatforms; i++) {
+			if (platforms[i].solid) {
+				if (character->position.y - character->size.y / 2.0f < platforms[i].position.y + platforms[i].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f + COLLISION_EPSILON) {
+					if (character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f && character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f) {
+						if (character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f && character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f) {
+							if (character->velocity.x > 0.0f) {
+								character->position.x = platforms[i].position.x - platforms[i].size.x / 2.0f - character->size.x / 2.0f;
+				
+								character->velocity.x = 0.0f;
+							}
+							else if (character->velocity.x < 0.0f) {
+								character->position.x = platforms[i].position.x + platforms[i].size.x / 2.0f + character->size.x / 2.0f;
+				
+								character->velocity.x = 0.0f;
+							}
 						}
 					}
 				}
@@ -180,49 +190,52 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 
 	character->onGround = false;
 
-	// Y collision with boxes
-	for (int o = 0; o < lenBoxes; o++) {
-		if (character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f && character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f) {
-			if (character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f && character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f) {
-				if (character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f && character->position.y - character->size.y / 2.0f <= boxes[o].position.y + boxes[o].size.y / 2.0f) {
-					// Falling onto the boxes[o]
-					if (character->velocity.y <= 0.0f) {
-						character->position.y = boxes[o].position.y + boxes[o].size.y / 2.0f + character->size.y / 2.0f;
-		
-						character->velocity.y = 0.0f;
-						character->onGround = true;
-					}
-		
-					// Jumping into the bottom of the boxes[o]
-					else if (character->velocity.y > 0.0f) {
-						character->position.y = boxes[o].position.y - boxes[o].size.y / 2.0f - character->size.y / 2.0f;
-		
-						character->velocity.y = 0.0f;
-					}
-				}
-			}
-		}
-	}
-
-	// Y collision with platforms
-	for (int i = 0; i < lenPlatforms; i++) {
-		if (platforms[i].solid) {
-			if (character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f && character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f) {
-				if (character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f && character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f) {
-					if (character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f && character->position.y - character->size.y / 2.0f <= platforms[i].position.y + platforms[i].size.y / 2.0f) {
-						// Falling onto the platforms[i]
+	// Y collisions
+	if (!character->noclip) {
+		// Y collision with boxes
+		for (int o = 0; o < lenBoxes; o++) {
+			if (character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f && character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f) {
+				if (character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f && character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f) {
+					if (character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f && character->position.y - character->size.y / 2.0f <= boxes[o].position.y + boxes[o].size.y / 2.0f) {
+						// Falling onto the boxes[o]
 						if (character->velocity.y <= 0.0f) {
-							character->position.y = platforms[i].position.y + platforms[i].size.y / 2.0f + character->size.y / 2.0f;
+							character->position.y = boxes[o].position.y + boxes[o].size.y / 2.0f + character->size.y / 2.0f;
 			
 							character->velocity.y = 0.0f;
 							character->onGround = true;
 						}
 			
-						// Jumping into the bottom of the platforms[i]
+						// Jumping into the bottom of the boxes[o]
 						else if (character->velocity.y > 0.0f) {
-							character->position.y = platforms[i].position.y - platforms[i].size.y / 2.0f - character->size.y / 2.0f;
+							character->position.y = boxes[o].position.y - boxes[o].size.y / 2.0f - character->size.y / 2.0f;
 			
 							character->velocity.y = 0.0f;
+						}
+					}
+				}
+			}
+		}
+	
+		// Y collision with platforms
+		for (int i = 0; i < lenPlatforms; i++) {
+			if (platforms[i].solid) {
+				if (character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f && character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f) {
+					if (character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f && character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f) {
+						if (character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f && character->position.y - character->size.y / 2.0f <= platforms[i].position.y + platforms[i].size.y / 2.0f) {
+							// Falling onto the platforms[i]
+							if (character->velocity.y <= 0.0f) {
+								character->position.y = platforms[i].position.y + platforms[i].size.y / 2.0f + character->size.y / 2.0f;
+				
+								character->velocity.y = 0.0f;
+								character->onGround = true;
+							}
+				
+							// Jumping into the bottom of the platforms[i]
+							else if (character->velocity.y > 0.0f) {
+								character->position.y = platforms[i].position.y - platforms[i].size.y / 2.0f - character->size.y / 2.0f;
+				
+								character->velocity.y = 0.0f;
+							}
 						}
 					}
 				}
@@ -233,41 +246,44 @@ void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSe
 	// Move z
 	character->position.z += character->velocity.z * delta;
 
-	// Z collision with boxes
-	for (int o = 0; o < lenBoxes; o++) {
-		if (character->position.y - character->size.y / 2.0f < boxes[o].position.y + boxes[o].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f + COLLISION_EPSILON) {
-			if (character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f && character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f) {
-				if (character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f && character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f) {
-					if (character->velocity.z > 0.0f) {
-						character->position.z = boxes[o].position.z - boxes[o].size.z / 2.0f - character->size.z / 2.0f;
-		
-						character->velocity.z = 0.0f;
-					}
-					else if (character->velocity.z < 0.0f) {
-						character->position.z = boxes[o].position.z + boxes[o].size.z / 2.0f + character->size.z / 2.0f;
-		
-						character->velocity.z = 0.0f;
-					}
-				}
-			}
-		}
-	}
-
-	// Z collision with platforms
-	for (int i = 0; i < lenPlatforms; i++) {
-		if (platforms[i].solid) {
-			if (character->position.y - character->size.y / 2.0f < platforms[i].position.y + platforms[i].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f + COLLISION_EPSILON) {
-				if (character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f && character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f) {
-					if (character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f && character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f) {
+	// Z collisions
+	if (!character->noclip) {
+		// Z collision with boxes
+		for (int o = 0; o < lenBoxes; o++) {
+			if (character->position.y - character->size.y / 2.0f < boxes[o].position.y + boxes[o].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > boxes[o].position.y - boxes[o].size.y / 2.0f + COLLISION_EPSILON) {
+				if (character->position.x - character->size.x / 2.0f < boxes[o].position.x + boxes[o].size.x / 2.0f && character->position.x + character->size.x / 2.0f > boxes[o].position.x - boxes[o].size.x / 2.0f) {
+					if (character->position.z + character->size.z / 2.0f > boxes[o].position.z - boxes[o].size.z / 2.0f && character->position.z - character->size.z / 2.0f < boxes[o].position.z + boxes[o].size.z / 2.0f) {
 						if (character->velocity.z > 0.0f) {
-							character->position.z = platforms[i].position.z - platforms[i].size.z / 2.0f - character->size.z / 2.0f;
+							character->position.z = boxes[o].position.z - boxes[o].size.z / 2.0f - character->size.z / 2.0f;
 			
 							character->velocity.z = 0.0f;
 						}
 						else if (character->velocity.z < 0.0f) {
-							character->position.z = platforms[i].position.z + platforms[i].size.z / 2.0f + character->size.z / 2.0f;
+							character->position.z = boxes[o].position.z + boxes[o].size.z / 2.0f + character->size.z / 2.0f;
 			
 							character->velocity.z = 0.0f;
+						}
+					}
+				}
+			}
+		}
+
+		// Z collision with platforms
+		for (int i = 0; i < lenPlatforms; i++) {
+			if (platforms[i].solid) {
+				if (character->position.y - character->size.y / 2.0f < platforms[i].position.y + platforms[i].size.y / 2.0f - COLLISION_EPSILON && character->position.y + character->size.y / 2.0f > platforms[i].position.y - platforms[i].size.y / 2.0f + COLLISION_EPSILON) {
+					if (character->position.x - character->size.x / 2.0f < platforms[i].position.x + platforms[i].size.x / 2.0f && character->position.x + character->size.x / 2.0f > platforms[i].position.x - platforms[i].size.x / 2.0f) {
+						if (character->position.z + character->size.z / 2.0f > platforms[i].position.z - platforms[i].size.z / 2.0f && character->position.z - character->size.z / 2.0f < platforms[i].position.z + platforms[i].size.z / 2.0f) {
+							if (character->velocity.z > 0.0f) {
+								character->position.z = platforms[i].position.z - platforms[i].size.z / 2.0f - character->size.z / 2.0f;
+				
+								character->velocity.z = 0.0f;
+							}
+							else if (character->velocity.z < 0.0f) {
+								character->position.z = platforms[i].position.z + platforms[i].size.z / 2.0f + character->size.z / 2.0f;
+				
+								character->velocity.z = 0.0f;
+							}
 						}
 					}
 				}
