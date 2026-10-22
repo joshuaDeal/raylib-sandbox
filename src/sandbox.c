@@ -411,6 +411,7 @@ int main(void) {
 	gameState.characters[0].size = (Vector3){ 0.90f, 1.90f, 0.90f };
 	gameState.characters[0].position = (Vector3){ 0.0f, 0.0f, 0.0f };
 	gameState.characters[0].isHuman = true;
+	gameState.characters[0].isPlayer = true;
 	gameState.characters[0].speed = PLAYER_SPEED;
 	gameState.characters[0].jumpForce = PLAYER_JUMP_FORCE;
 	gameState.characters[0].yaw = 0.0f;
@@ -429,6 +430,7 @@ int main(void) {
 	gameState.characters[1].size = (Vector3){ 0.90f, 1.90f, 0.90f };
 	gameState.characters[1].position = (Vector3){ 5.0f, 0.0f, 0.0f };
 	gameState.characters[1].isHuman = false;
+	gameState.characters[1].isPlayer = false;
 	gameState.characters[1].speed = PLAYER_SPEED;
 	gameState.characters[1].jumpForce = PLAYER_JUMP_FORCE;
 	gameState.characters[1].yaw = 3.14f;

@@ -28,6 +28,7 @@ typedef struct Character {
 	float speed;
 	float jumpForce;
 	bool isHuman;
+	bool isPlayer;
 	bool onGround;
 	float yaw; // Rotation around y
 	float pitch; // Rotation around x

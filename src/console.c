@@ -187,6 +187,7 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		gameState->characters[gameState->lenCharacters].size = (Vector3){ 0.90f, 1.90f, 0.90f };
 		gameState->characters[gameState->lenCharacters].position = position;
 		gameState->characters[gameState->lenCharacters].isHuman = false;
+		gameState->characters[gameState->lenCharacters].isPlayer = false;
 		gameState->characters[gameState->lenCharacters].speed = PLAYER_SPEED;
 		gameState->characters[gameState->lenCharacters].jumpForce = PLAYER_JUMP_FORCE;
 		gameState->characters[gameState->lenCharacters].yaw = 3.14f;
@@ -313,12 +314,94 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 	}
 }
 
+void cmdDelete(Console *console, GameState *gameState, int lenArgs, char *args[]) {
+	(void)console;
+
+	// Make sure we have two arguments
+	if (lenArgs < 2) {
+		TraceLog(LOG_ERROR, "Inncorect number of arguments for delete.");
+		TraceLog(LOG_ERROR, "Delete usage: `delete <type> <id number>`");
+		return;
+	}
+
+	bool validObject = false;
+
+	// Pickups
+	if (strcmp(args[0], "pickup") == 0 && gameState->lenPickups <= MAX_PICKUPS) {
+		validObject = true;
+
+		int position = atoi(args[1]);
+
+		if (gameState->lenPickups > position && position >= 0) {
+			// Remove pickup light
+			DeleteLight(gameState->basicLightingShader, &gameState->pickups[position].light);
+
+			// Remove pickup
+			for (int i = position; i < gameState->lenPickups - 1; i++) {
+				gameState->pickups[i] = gameState->pickups[i + 1];
+			}
+			gameState->lenPickups--;
+		}
+		else {
+			TraceLog(LOG_ERROR, "Pickup %d not in range.", position);
+			return;
+		}
+	}
+	
+	// NPCs 
+	if (strcmp(args[0], "npc") == 0 && gameState->lenCharacters <= MAX_CHARACTERS) {
+		validObject = true;
+
+		int position = atoi(args[1]);
+
+		if (gameState->lenCharacters > position && position >= 0 && !gameState->characters[position].isPlayer) {
+			// Remove npc 
+			for (int i = position; i < gameState->lenCharacters - 1; i++) {
+				gameState->characters[i] = gameState->characters[i + 1];
+			}
+			gameState->lenCharacters--;
+		}
+		else {
+			TraceLog(LOG_ERROR, "NPC %d not in range.", position);
+			return;
+		}
+	}
+
+	// Platforms
+	if (strcmp(args[0], "platform") == 0 && gameState->lenPlatforms <= MAX_PLATFORMS) {
+		validObject = true;
+
+		int position = atoi(args[1]);
+
+		if (gameState->lenPlatforms > position && position >= 0) {
+			// Unload platform model
+			UnloadModel(gameState->platforms[position].model);
+
+			// Remove platform 
+			for (int i = position; i < gameState->lenPlatforms - 1; i++) {
+				gameState->platforms[i] = gameState->platforms[i + 1];
+			}
+			gameState->lenPlatforms--;
+		}
+		else {
+			TraceLog(LOG_ERROR, "Platform %d not in range.", position);
+			return;
+		}
+	}
+
+	if (!validObject) {
+		TraceLog(LOG_ERROR, "%s not deletable.", args[0]);
+		return;
+	}
+}
+
 static const Command commands[] = {
 	{ "help",  cmdHelp,  "List available commands" },
 	{ "clear", cmdClear, "Clear the console" },
 	{ "echo",  cmdEcho,  "Print text" },
 	{ "gravity",  cmdGravity,  "Set gravity value" },
 	{ "spawn",  cmdSpawn,  "Spawn something" },
+	{ "delete",  cmdDelete,  "Delete something" },
 };
 
 void cmdHelp(Console *console, GameState *gameState, int lenArgs, char *args[]) {
