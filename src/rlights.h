@@ -53,6 +53,8 @@ typedef struct {
 	Color color;
 	float intensity;
 	float attenuation;
+
+	int slot;
 	
 	// Shader locations
 	int enabledLoc;
@@ -79,6 +81,7 @@ extern "C" {            // Prevents name mangling of functions
 //----------------------------------------------------------------------------------
 Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader);   // Create a light and get shader locations
 void UpdateLightValues(Shader shader, Light light);         // Send light properties to shader
+void DeleteLight(Shader shader, Light *light);
 
 #ifdef __cplusplus
 }
@@ -110,7 +113,7 @@ void UpdateLightValues(Shader shader, Light light);         // Send light proper
 //----------------------------------------------------------------------------------
 // Global Variables Definition
 //----------------------------------------------------------------------------------
-static int lightsCount = 0;    // Current amount of created lights
+static bool lightSlots[MAX_LIGHTS] = { false };
 
 //----------------------------------------------------------------------------------
 // Module Internal Functions Declaration
@@ -122,31 +125,39 @@ static int lightsCount = 0;    // Current amount of created lights
 //----------------------------------------------------------------------------------
 
 // Create a light and get shader locations
-Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader)
-{
+Light CreateLight(int type, Vector3 position, Vector3 target, Color color, float intensity, Shader shader) {
 	Light light = { 0 };
+	light.slot = -1;
 
-	if (lightsCount < MAX_LIGHTS)
-	{
-		light.enabled = true;
-		light.type = type;
-		light.position = position;
-		light.target = target;
-		light.color = color;
-		light.intensity = intensity;
-
-		// NOTE: Lighting shader naming must be the provided ones
-		light.enabledLoc = GetShaderLocation(shader, TextFormat("lights[%i].enabled", lightsCount));
-		light.typeLoc = GetShaderLocation(shader, TextFormat("lights[%i].type", lightsCount));
-		light.positionLoc = GetShaderLocation(shader, TextFormat("lights[%i].position", lightsCount));
-		light.targetLoc = GetShaderLocation(shader, TextFormat("lights[%i].target", lightsCount));
-		light.colorLoc = GetShaderLocation(shader, TextFormat("lights[%i].color", lightsCount));
-		light.intensityLoc = GetShaderLocation(shader, TextFormat("lights[%i].intensity", lightsCount));
-
-		UpdateLightValues(shader, light);
-		
-		lightsCount++;
+	int slot = -1;
+	
+	for (int i = 0; i < MAX_LIGHTS; i++) {
+		if (!lightSlots[i]) {
+			slot = i;
+			break;
+		}
 	}
+	
+	if (slot < 0) return light;  // No free slots
+	
+	lightSlots[slot] = true;
+	light.slot = slot;
+	light.enabled = true;
+	light.type = type;
+	light.position = position;
+	light.target = target;
+	light.color = color;
+	light.intensity = intensity;
+	
+	// Example:
+	light.enabledLoc = GetShaderLocation(shader, TextFormat("lights[%i].enabled", slot));
+	light.typeLoc = GetShaderLocation(shader, TextFormat("lights[%i].type", slot));
+	light.positionLoc = GetShaderLocation(shader, TextFormat("lights[%i].position", slot));
+	light.targetLoc = GetShaderLocation(shader, TextFormat("lights[%i].target", slot));
+	light.colorLoc = GetShaderLocation(shader, TextFormat("lights[%i].color", slot));
+	light.intensityLoc = GetShaderLocation(shader, TextFormat("lights[%i].intensity", slot));
+	
+	UpdateLightValues(shader, light);
 
 	return light;
 }
@@ -173,6 +184,21 @@ void UpdateLightValues(Shader shader, Light light)
 
 	// Send to shader light intensity values
 	SetShaderValue(shader, light.intensityLoc, &light.intensity, SHADER_UNIFORM_FLOAT);
+}
+
+void DeleteLight(Shader shader, Light *light) {
+	if (light == NULL || light->slot < 0 || light->slot >= MAX_LIGHTS) return;
+
+	int slot = light->slot;
+
+	// Tell the shader to stop using this light.
+	light->enabled = false;
+	SetShaderValue(shader, light->enabledLoc, &light->enabled, SHADER_UNIFORM_INT);
+
+	lightSlots[slot] = false;
+
+	// Make accidental repeated deletion harmless.
+	light->slot = -1;
 }
 
 #endif // RLIGHTS_IMPLEMENTATION
