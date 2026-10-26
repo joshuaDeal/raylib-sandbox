@@ -595,7 +595,7 @@ int main(void) {
 					for (int i = 0; i < gameState.lenCharacters; i++) {
 						if (gameState.characters[i].isHuman) {
 							UpdatePlayerCharacter(&gameState.characters[i], &gameState.playerCamera, mouseSensitivity, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, gameState.pickups, gameState.lenPickups, &gameState.playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, gameState.basicLightingShader);
-							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &clickRay, clickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
+							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &clickRay, clickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud, gameState.platforms, &gameState.lenPlatforms);
 						}
 						else {
 							UpdateNPC(&gameState.characters[i], gameState.playerCamera, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, fxStep, fxLand);
@@ -808,6 +808,9 @@ int main(void) {
 						// Draw clickRay
 						DrawRay(clickRay, RED);
 
+						// Draw platform selection indicator lines
+						DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
+
 					EndMode3D();
 				EndTextureMode();
 
@@ -857,6 +860,9 @@ int main(void) {
 						// Draw clickRay
 						DrawRay(clickRay, RED);
 
+						// Draw platform selection indicator lines
+						DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
+
 					EndMode3D();
 
 					// Draw crosshair
@@ -880,6 +886,7 @@ int main(void) {
 						const char* itemText = TextFormat("%d", gameState.characters[0].inventoryIndex);
 						switch (gameState.characters[0].inventoryIndex) {
 							case INVENTORY_NOTHING: itemText = "None"; break;
+							case INVENTORY_EDIT_TOOL: itemText = "Edit Tool"; break;
 							case INVENTORY_BUILD_TOOL: itemText = "Build Tool"; break;
 							case INVENTORY_TESPECIAL: itemText = ".38 Special"; break;
 							default: break;

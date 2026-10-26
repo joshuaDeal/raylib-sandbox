@@ -12,8 +12,11 @@ typedef struct Platform {
 	Vector3 scale;
 	Color color;
 	bool solid;
+	bool selected;
 } Platform;
 
 void DrawPlatforms(Platform *platforms, int lenPlatforms);
+
+void DrawPlatformSelection(Platform *platforms, int lenPlatforms);
 
 #endif
