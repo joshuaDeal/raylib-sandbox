@@ -458,17 +458,19 @@ int main(void) {
 	gameState.boxes[0] = (Box){(Vector3){ 1.0f, 0.5f, 4.0f }, (Vector3){ BOX_SIZE, BOX_SIZE, BOX_SIZE }, boxModel, ORANGE, 100.0f};
 
 	// Create platforms
+	gameState.unitCubeModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
+	for (int i = 0; i < gameState.unitCubeModel.materialCount; i++) gameState.unitCubeModel.materials[i].shader = gameState.basicLightingShader;
 	gameState.lenPlatforms = 5;
-	gameState.platforms[0] = (Platform){ .position = (Vector3){ 0.0f, -0.25f, 0.0f }, .size = (Vector3){ 20.0f, 0.5f, 20.0f }, .color = GREEN, .solid = true };
-	gameState.platforms[0].model = CreatePlatformModel(gameState.platforms[0].size, gameState.basicLightingShader);
-	gameState.platforms[1] = (Platform){ .position = (Vector3){ 10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
-	gameState.platforms[1].model = CreatePlatformModel(gameState.platforms[1].size, gameState.basicLightingShader);
-	gameState.platforms[2] = (Platform){ .position = (Vector3){ -10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true };
-	gameState.platforms[2].model = CreatePlatformModel(gameState.platforms[2].size, gameState.basicLightingShader);
-	gameState.platforms[3] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, 10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
-	gameState.platforms[3].model = CreatePlatformModel(gameState.platforms[3].size, gameState.basicLightingShader);
-	gameState.platforms[4] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, -10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true };
-	gameState.platforms[4].model = CreatePlatformModel(gameState.platforms[4].size, gameState.basicLightingShader);
+	gameState.platforms[0] = (Platform){ .position = (Vector3){ 0.0f, -0.25f, 0.0f }, .size = (Vector3){ 20.0f, 0.5f, 20.0f }, .color = GREEN, .solid = true, .model = gameState.unitCubeModel };
+	gameState.platforms[0].scale = gameState.platforms[0].size;
+	gameState.platforms[1] = (Platform){ .position = (Vector3){ 10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true, .model = gameState.unitCubeModel };
+	gameState.platforms[1].scale = gameState.platforms[1].size;
+	gameState.platforms[2] = (Platform){ .position = (Vector3){ -10.25f, 1.0f, 0.0f }, .size = (Vector3){ 0.5f, 2.0f, 20.0f }, .color = GRAY, .solid = true, .model = gameState.unitCubeModel };
+	gameState.platforms[2].scale = gameState.platforms[2].size;
+	gameState.platforms[3] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, 10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true, .model = gameState.unitCubeModel };
+	gameState.platforms[3].scale = gameState.platforms[3].size;
+	gameState.platforms[4] = (Platform){ .position = (Vector3){ 0.0f, 1.0f, -10.25f }, .size = (Vector3){ 20.0f, 2.0f, 0.5f }, .color = GRAY, .solid = true, .model = gameState.unitCubeModel };
+	gameState.platforms[4].scale = gameState.platforms[4].size;
 
 	// Create pickups
 	gameState.lenPickups = 6;
@@ -945,8 +947,7 @@ int main(void) {
 	UnloadModel(littleMuzzleFlareModel);
 	UnloadModel(bigMuzzleFlareModel);
 	UnloadModel(gameState.teAmmoModel);
-
-	for (int i = 0; i < gameState.lenPlatforms; i++) UnloadModel(gameState.platforms[i].model);
+	UnloadModel(gameState.unitCubeModel);
 
 	UnloadRenderTexture(viewport);
 

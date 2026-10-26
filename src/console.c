@@ -203,6 +203,7 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		gameState->lenCharacters++;
 	}
 
+	// Platforms
 	if (strcmp(args[0], "platform") == 0 && gameState->lenPlatforms < MAX_PLATFORMS) {
 		validObject = true;
 
@@ -303,8 +304,8 @@ void cmdSpawn(Console *console, GameState *gameState, int lenArgs, char *args[])
 		}
 
 		// Spawn platform
-		gameState->platforms[gameState->lenPlatforms] = (Platform){ .position = position, .size = size, .color = color, .solid = solid };
-		gameState->platforms[gameState->lenPlatforms].model = CreatePlatformModel(gameState->platforms[gameState->lenPlatforms].size, gameState->basicLightingShader);
+		gameState->platforms[gameState->lenPlatforms] = (Platform){ .position = position, .size = size, .color = color, .solid = solid, .model = gameState->unitCubeModel };
+		gameState->platforms[gameState->lenPlatforms].scale = gameState->platforms[gameState->lenPlatforms].size;
 		gameState->lenPlatforms++;
 	}
 
@@ -374,9 +375,6 @@ void cmdDelete(Console *console, GameState *gameState, int lenArgs, char *args[]
 		int position = atoi(args[1]);
 
 		if (gameState->lenPlatforms > position && position >= 0) {
-			// Unload platform model
-			UnloadModel(gameState->platforms[position].model);
-
 			// Remove platform 
 			for (int i = position; i < gameState->lenPlatforms - 1; i++) {
 				gameState->platforms[i] = gameState->platforms[i + 1];

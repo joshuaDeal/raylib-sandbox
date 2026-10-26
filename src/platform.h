@@ -9,11 +9,10 @@ typedef struct Platform {
 	Vector3 position;
 	Vector3 size;
 	Model model;
+	Vector3 scale;
 	Color color;
 	bool solid;
 } Platform;
-
-Model CreatePlatformModel(Vector3 size, Shader shader);
 
 void DrawPlatforms(Platform *platforms, int lenPlatforms);
 

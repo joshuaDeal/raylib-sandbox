@@ -19,6 +19,7 @@ typedef struct GameState {
 	Box boxes[MAX_BOXES];
 	int lenPlatforms;
 	Platform platforms[MAX_PLATFORMS];
+	Model unitCubeModel;
 	Pickup pickups[MAX_PICKUPS];
 	int lenPickups;
 	Model teAmmoModel;
