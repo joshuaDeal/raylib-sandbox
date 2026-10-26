@@ -488,8 +488,8 @@ int main(void) {
 	gameState.gravity = 10.0f;
 	float mouseSensitivity = 0.003f;
 
-	RayCollision boxClickCollision = { 0 };
-	Ray boxClickRay = { 0 };
+	RayCollision clickCollision = { 0 };
+	Ray clickRay = { 0 };
 
 	SetTargetFPS(60);
 
@@ -593,7 +593,7 @@ int main(void) {
 					for (int i = 0; i < gameState.lenCharacters; i++) {
 						if (gameState.characters[i].isHuman) {
 							UpdatePlayerCharacter(&gameState.characters[i], &gameState.playerCamera, mouseSensitivity, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, gameState.pickups, gameState.lenPickups, &gameState.playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, gameState.basicLightingShader);
-							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &boxClickRay, boxClickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
+							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &clickRay, clickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud);
 						}
 						else {
 							UpdateNPC(&gameState.characters[i], gameState.playerCamera, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, fxStep, fxLand);
@@ -803,8 +803,8 @@ int main(void) {
 						// Draw floor
 						DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
 
-						// Draw boxClickRay
-						DrawRay(boxClickRay, RED);
+						// Draw clickRay
+						DrawRay(clickRay, RED);
 
 					EndMode3D();
 				EndTextureMode();
@@ -852,8 +852,8 @@ int main(void) {
 						// Draw floor 
 						//DrawFloor(20, 20, 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f, -0.5f * 20.0f * 1.0f - 0.5f * 1.0f);
 
-						// Draw boxClickRay
-						DrawRay(boxClickRay, RED);
+						// Draw clickRay
+						DrawRay(clickRay, RED);
 
 					EndMode3D();
 
