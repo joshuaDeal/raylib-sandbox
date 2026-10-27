@@ -4,6 +4,16 @@
 #include "platform.h"
 #include <raylib.h>
 
-void UpdateItemEditTool(Platform platforms[], int *lenPlatforms, Ray *clickRay, RayCollision clickCollision, Camera playerCamera);
+typedef enum EditMode {
+	MOVE = 0,
+	SCALE = 1,
+	ROTATE = 2
+} EditMode;
+
+typedef struct EditTool {
+	EditMode mode;
+} EditTool;
+
+void UpdateItemEditTool(EditTool *editTool, Platform platforms[], int *lenPlatforms, Ray *clickRay, RayCollision clickCollision, Camera playerCamera);
 
 #endif

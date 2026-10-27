@@ -6,7 +6,8 @@
 #include "pickup.h"
 #include <raymath.h>
 
-void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud, Platform platforms[], int *lenPlatforms) {
+// TODO: Update this to account for the newly added GameState
+void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box boxes[], int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud, Platform platforms[], int *lenPlatforms, EditTool *playerEditTool) {
 	// Update character inventory position
 	float wheel = GetMouseWheelMove();
 	if (wheel > 0) {
@@ -34,7 +35,7 @@ void UpdateCharacterInventory(Character *character, bool *showInventory, float *
 
 	// Update inventory item.
 	if (character->inventoryIndex == INVENTORY_EDIT_TOOL && character->inventory[character->inventoryIndex]) {
-		UpdateItemEditTool(platforms, lenPlatforms, boxClickRay, boxClickCollision, characterCamera);
+		UpdateItemEditTool(playerEditTool, platforms, lenPlatforms, boxClickRay, boxClickCollision, characterCamera);
 	}
 
 	if (character->inventoryIndex == INVENTORY_BUILD_TOOL && character->inventory[character->inventoryIndex]) {

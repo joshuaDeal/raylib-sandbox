@@ -11,6 +11,7 @@
 
 typedef struct Box Box;
 typedef struct TeSpecial TeSpecial;
+typedef struct EditTool EditTool;
 typedef struct Pickup Pickup;
 typedef struct Platform Platform;
 
@@ -44,7 +45,7 @@ typedef struct Character {
 	bool noclip;
 } Character;
 
-void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box *boxes, int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud, Platform *platforms, int *lenPlatforms);
+void UpdateCharacterInventory(Character *character, bool *showInventory, float *showInventoryTimer, Box *boxes, int *lenBoxes, Ray *boxClickRay, RayCollision boxClickCollision, int *boxSelectedColorY, int *boxSelectedColorX, bool *showColorPicker, float *colorPickerTimer, Color colors[][8], int colorsPerRow, int colorsPerCol, Camera characterCamera, Model boxModel, Sound fxHitBox, Sound fxBreakBox, Sound fxPlaceBox, Sound fxChangeColor, TeSpecial *characterTeSpecial, SoundPool *teShotPool, SoundPool *reloadPool, SoundPool *triggerPullPool, bool *showTeSpecialHud, Platform *platforms, int *lenPlatforms, EditTool *playerEditTool);
 
 void UpdatePlayerCharacter(Character *character, Camera3D *camera, float mouseSensitivity, float gravity, Box *boxes, int lenBoxes, Platform *platforms, int lenPlatforms, Pickup *pickups, int lenPickups, TeSpecial *teSpecial, Sound walkSound, Sound jumpSound, Sound landSound, SoundPool *getAmmoPool, Shader lightShader);
 

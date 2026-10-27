@@ -26,6 +26,7 @@ You can also try a gcc command like this:
 #include "platform.h"
 #include "console.h"
 #include "gamestate.h"
+#include "edittool.h"
 
 #define RLIGHTS_IMPLEMENTATION
 #include "rlights.h"
@@ -447,9 +448,11 @@ int main(void) {
 	gameState.characters[1].noclip = false;
 
 	// Create player weapons
-	gameState.playerTeSpecial = (TeSpecial){6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, gameState.basicLightingShader)};
+	gameState.playerTeSpecial = (TeSpecial){ 6, 6, 144, 144, 0.0f, -1, CreateLight(LIGHT_POINT, Vector3Zero(), Vector3Zero(), (Color){ 255, 214, 100, 255 }, 0.1f, gameState.basicLightingShader) };
 	gameState.playerTeSpecial.flareLight.enabled = false;
 	bool showTeSpecialHud = false;
+
+	gameState.playerEditTool = (EditTool){ MOVE };
 
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
@@ -595,7 +598,7 @@ int main(void) {
 					for (int i = 0; i < gameState.lenCharacters; i++) {
 						if (gameState.characters[i].isHuman) {
 							UpdatePlayerCharacter(&gameState.characters[i], &gameState.playerCamera, mouseSensitivity, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, gameState.pickups, gameState.lenPickups, &gameState.playerTeSpecial, fxStep, fxJump, fxLand, &getAmmoPool, gameState.basicLightingShader);
-							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &clickRay, clickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud, gameState.platforms, &gameState.lenPlatforms);
+							UpdateCharacterInventory(&gameState.characters[i], &showInventory, &showInventoryTimer, gameState.boxes, &gameState.lenBoxes, &clickRay, clickCollision, &selectedColorY, &selectedColorX, &showColorPicker, &colorPickerTimer, colors, colorsPerRow, colorsPerCol, gameState.playerCamera, boxModel, fxHitBox, fxBreakBox, fxPlaceBox, fxChangeColor, &gameState.playerTeSpecial, &teShotPool, &reloadPool, &triggerPullPool, &showTeSpecialHud, gameState.platforms, &gameState.lenPlatforms, &gameState.playerEditTool);
 						}
 						else {
 							UpdateNPC(&gameState.characters[i], gameState.playerCamera, gameState.gravity, gameState.boxes, gameState.lenBoxes, gameState.platforms, gameState.lenPlatforms, fxStep, fxLand);

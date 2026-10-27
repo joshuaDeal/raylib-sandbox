@@ -7,6 +7,7 @@
 #include "buildtool.h"
 #include "platform.h"
 #include "pickup.h"
+#include "edittool.h"
 
 typedef struct GameState {
 	Camera3D genericCamera;
@@ -15,6 +16,7 @@ typedef struct GameState {
 	Character characters[MAX_CHARACTERS];
 	Model playerModel;
 	TeSpecial playerTeSpecial;
+	EditTool playerEditTool;
 	int lenBoxes;
 	Box boxes[MAX_BOXES];
 	int lenPlatforms;
