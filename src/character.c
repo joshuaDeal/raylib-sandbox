@@ -36,6 +36,10 @@ void UpdateCharacterInventory(Character *character, bool *showInventory, float *
 	// Update inventory item.
 	if (character->inventoryIndex == INVENTORY_EDIT_TOOL && character->inventory[character->inventoryIndex]) {
 		UpdateItemEditTool(playerEditTool, platforms, lenPlatforms, boxClickRay, boxClickCollision, characterCamera);
+		playerEditTool->showSelection = true;
+	}
+	else {
+		playerEditTool->showSelection = false;
 	}
 
 	if (character->inventoryIndex == INVENTORY_BUILD_TOOL && character->inventory[character->inventoryIndex]) {

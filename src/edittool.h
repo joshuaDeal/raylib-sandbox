@@ -12,6 +12,7 @@ typedef enum EditMode {
 
 typedef struct EditTool {
 	EditMode mode;
+	bool showSelection;
 } EditTool;
 
 void UpdateItemEditTool(EditTool *editTool, Platform platforms[], int *lenPlatforms, Ray *clickRay, RayCollision clickCollision, Camera playerCamera);

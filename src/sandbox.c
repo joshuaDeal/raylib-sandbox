@@ -452,7 +452,7 @@ int main(void) {
 	gameState.playerTeSpecial.flareLight.enabled = false;
 	bool showTeSpecialHud = false;
 
-	gameState.playerEditTool = (EditTool){ MOVE };
+	gameState.playerEditTool = (EditTool){ MOVE, false };
 
 	// Create boxes
 	Model boxModel = LoadModelFromMesh(GenMeshCube(BOX_SIZE, BOX_SIZE, BOX_SIZE));
@@ -812,7 +812,7 @@ int main(void) {
 						DrawRay(clickRay, RED);
 
 						// Draw platform selection indicator lines
-						DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
+						if (gameState.playerEditTool.showSelection) DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
 
 					EndMode3D();
 				EndTextureMode();
@@ -864,7 +864,7 @@ int main(void) {
 						DrawRay(clickRay, RED);
 
 						// Draw platform selection indicator lines
-						DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
+						if (gameState.playerEditTool.showSelection) DrawPlatformSelection(gameState.platforms, gameState.lenPlatforms);
 
 					EndMode3D();
 
